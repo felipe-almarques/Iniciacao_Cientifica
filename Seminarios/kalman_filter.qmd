@@ -1,0 +1,75 @@
+---
+title: "Kalman Filter"
+author: "Felipe Marques"
+format: 
+  revealjs:
+    incremental: true
+    theme: sky
+editor: visual
+---
+
+## Sumario
+
+1.  State Space Representation
+2.  Kalman Filter (ou prediction ou smoothing)
+3.  blablabla
+
+# State Space Representation
+
+------------------------------------------------------------------------
+
+### Introducao
+
+A representação em estado de espaço é uma forma conveniente de representar as dinâmicas de uma variável através de duas equações que a descreve. (melhorar essa parte)
+
+Essa representação será útil quando tratarmos dos algoritmos de Kalman.
+
+------------------------------------------------------------------------
+
+### State Space Representation
+
+Considere,
+
+-   $\underset{(n \times 1)}{\mathbf{y}_t}$ um vetor de retornos observados,
+-   $\underset{(r \times 1)}{\xi_t}$ um vetor possívelmente não observado,
+-   $\underset{(k \times 1)}{\mathbf{x}_t}$ um vetor de variáveis exógenas,
+-   $\mathbf{F}_{(r \times r)}, \mathbf{A}_{(n \times k)}', \mathbf{H}'_{(n \times r)}$ matrizes de coeficientes.
+
+------------------------------------------------------------------------
+
+Então, a representação em estado de espaço de um modelo é da forma:
+
+. . .
+
+$$
+\begin{equation}
+\begin{array}{ccl}
+  \mathbf{y}_t & = & \mathbf{A}'\mathbf{x}_t + \mathbf{H}'\xi_t + \mathbf{w}_t \\
+  \xi_{t+1} & = & \mathbf{F}\xi_t + \mathbf{v}_t
+\end{array}
+\end{equation}
+$$
+
+. . .
+
+Onde, $\mathbf{v}_t,\mathbf{w}_t \sim WN$
+
+. . .
+
+$\textrm{Var}(\mathbf{v}_t) = \mathbf{Q}$ e $\textrm{Var}(\mathbf{w}_t) = \mathbf{R}$. Além disso, $\textrm{Cov}(\mathbf{v}_t,\mathbf{w}_k) = 0, \forall t,k$.
+
+. . .
+
+A equação de cima é chamada de *observation equation*, enquanto a de baixo é chamada de *state equation*.
+
+------------------------------------------------------------------------
+
+### Exemplos
+
+Considere o processo AR(p) dado da forma:
+
+$$
+y_{t+1} - \mu = \phi_1(y_t - \mu) + \ldots + \phi_p(y_{t-p+1} - \mu) + \epsilon_{t+1}
+$$
+
+onde $\epsilon_t \sim WN(0, \sigma^2)$
