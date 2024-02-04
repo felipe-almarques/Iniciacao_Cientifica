@@ -1,0 +1,22 @@
+---
+title: "Iniciação Científica"
+subtitle: "Modelos GARCH, GAS e de volatilidade estocástica: má especificação e suas consequências na previsão da volatilidade"
+sidebar: false
+tbl-colwidths: [75, 25]
+tbl-cap-location: bottom
+---
+
+Meu projeto de Iniciação Científica basea-se na comparação de três modelos de volatilidade em séries temporais: *GARCH*, *Stochastic Volatility* e *GAS*.
+
+A ideia central é verificar as consequências da má especificação do modelo para a previsão da volatilidade, importante parâmetro para construção de medidas de risco.
+
+
+### Seminários
+
+| Título | Slides  |
+|--------|--------|
+| GARCH vs GAS vs VE  | [Seminário 1](Seminarios/gas_garch_sv.qmd){target="_blank"} |
+| Generalized Autoregressive Score Model   | [Seminário 2](Seminarios/GAS.qmd){target="_blank"}   |
+| Kalman Filter | [Seminário 3](Seminarios/kalman_filter.qmd){target="_blank"} |
+
+: Seminários apresentados em laboratório

@@ -1,0 +1,33 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Felipe Marques"
+  search: false
+  navbar:
+    right:
+      - href: index.qmd
+        text: Home
+      - ic.qmd
+      - sidebar:disciplinas 
+      
+  sidebar: 
+    - id: disciplinas
+      title: "Disciplinas"
+      contents: 
+        - Materias/ME908.qmd
+        - Materias/ME920.qmd
+        - Materias/ME623.qmd
+        - Materias/ME714.qmd
+
+format:
+  html:
+    theme: 
+      light: lux
+      dark: cyborg
+    css: styles.css
+    toc: true
+
+editor: visual
+
