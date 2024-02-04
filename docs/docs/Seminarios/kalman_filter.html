@@ -10,7 +10,7 @@
   <meta name="generator" content="quarto-1.2.269">
 
   <meta name="author" content="Felipe Marques">
-  <title>Felipe Marques - Seminário - GARCH vs GAS vs VE</title>
+  <title>Felipe Marques - Kalman Filter</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -324,7 +324,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Seminário - GARCH vs GAS vs VE</h1>
+  <h1 class="title">Kalman Filter</h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -335,156 +335,67 @@ Felipe Marques
 </div>
 
 </section>
-<section id="introdução" class="slide level2">
-<h2>Introdução</h2>
-<p>Ao modelar séries temporais, buscamos capturar as estruturas de dependência para podermos realizar previsões. Para isso, podemos modelar:</p>
-<ul>
-<li class="fragment"><p>A média condicional: ARMA, ARIMA, SARIMA, etc.</p></li>
-<li class="fragment"><p>A variância condicional (volatilidade): ARCH, GARCH, GAS, VE, etc.</p></li>
-</ul>
-<div class="fragment">
-<p>Modelos de volatilidade tem especial importância em análises de séries temporais financeiras. E será foco dessa pesquisa.</p>
-</div>
-</section>
-<section id="proposta" class="slide level2">
-<h2>Proposta</h2>
-<p>Comparar os modelos de volatilidade: GARCH , Volatilidade Estocástica e GAS, quanto as consequências da má especificação do modelo.</p>
-<div class="fragment">
-<ul>
-<li class="fragment"><p>O que acontece quando tentamos estimar a volatilidade utilizando um modelo diferente daquele que gerou os dados?</p></li>
-<li class="fragment"><p>As estimativas são boas mesmo se não acertarmos na escolha do modelo?</p></li>
-</ul>
-</div>
-</section>
-<section id="classificação-de-modelos" class="slide level2">
-<h2>Classificação de modelos</h2>
-<p>Os modelos de séries temporias que possuem parâmetros que variam no tempo podem ser classificados em dois grupos:</p>
-<ul>
-<li class="fragment">Observation-driven models</li>
-<li class="fragment">Parameters-driven models</li>
-</ul>
-</section>
-<section id="observation-driven-models" class="slide level2">
-<h2>Observation-driven models</h2>
-<p>Os parâmetros são funções de variáveis dependentes defazadas no tempo. Portanto, dada toda informação passada, eles podem ser totalmente preditos.</p>
-<ul>
-<li class="fragment">Ex: Garch, GAS, ACD e ACI, DCC, etc.</li>
-</ul>
-<div class="fragment">
-<p>Uma vantagem desse tipo de modelo, é que simplifica o cálculo da verossimilhança.</p>
-</div>
-</section>
-<section id="parameters-driven-models" class="slide level2">
-<h2>Parameters-driven models</h2>
-<p>Os parâmentros são estocásticos e possuem sua própria fonte de erro. Portanto, dada toda informação passada, eles <strong>não</strong> podem ser totalmente preditos.</p>
-<ul>
-<li class="fragment">Ex: Volatilidade Estocástica (VE), Intensidade Estocástica, etc.</li>
-</ul>
-<div class="fragment">
-<p>Na maior parte dos casos, a verossimilhança deve ser calculada através de algoritmos computacionais como o MCMC.</p>
-</div>
+<section id="sumario" class="slide level2">
+<h2>Sumario</h2>
+<ol type="1">
+<li class="fragment">State Space Representation</li>
+<li class="fragment">Kalman Filter (ou prediction ou smoothing)</li>
+<li class="fragment">blablabla</li>
+</ol>
 </section>
 <section>
-<section id="garch-vs-gas-vs-ve" class="title-slide slide level1 center">
-<h1>GARCH vs GAS vs VE</h1>
+<section id="state-space-representation" class="title-slide slide level1 center">
+<h1>State Space Representation</h1>
 
 </section>
-<section id="garch" class="slide level2">
-<h2>GARCH</h2>
-<p>O modelo GARCH(<span class="math inline">\(p\)</span>,<span class="math inline">\(q\)</span>) é definido da seguinte forma:</p>
-<p><span class="math display">\[
-\begin{array}{l}
-r_t = \sigma_t\epsilon_t \\
-\sigma_t^2 = \omega + \sum_{i=1}^p \alpha_i r_{t-i}^2 + \sum_{j=1}^q \beta_j\sigma_{t-j}^2
-\end{array}
-\]</span></p>
-<div class="fragment">
-<p>Onde,</p>
-<div class="columns">
-<div class="column" data-widht="50%">
-<ul>
-<li class="fragment"><span class="math inline">\(\epsilon \sim iid(0,1)\)</span></li>
-<li class="fragment"><span class="math inline">\(\omega \gt 0\)</span></li>
-</ul>
-</div><div class="column" data-widht="50%">
-<ul>
-<li class="fragment"><span class="math inline">\(\alpha_i,\beta_j \ge 0, \forall i,j\)</span></li>
-<li class="fragment"><span class="math inline">\(\sum_{i=1}^p \alpha_i + \sum_{j=1}^q \beta_j \lt 1\)</span> (Estacionaridade)</li>
-</ul>
-</div>
-</div>
-</div>
+<section class="slide level2">
+
+<h3 id="introducao">Introducao</h3>
+<p>A representação em estado de espaço é uma forma conveniente de representar as dinâmicas de uma variável através de duas equações que a descreve. (melhorar essa parte)</p>
+<p>Essa representação será útil quando tratarmos dos algoritmos de Kalman.</p>
 </section>
-<section id="gas" class="slide level2">
-<h2>GAS</h2>
-<p>O modelo GAS (<em>Generalized Autoregressive Score model</em>) é definido como:</p>
+<section class="slide level2">
+
+<h3 id="state-space-representation-1">State Space Representation</h3>
+<p>Considere,</p>
+<ul>
+<li class="fragment"><span class="math inline">\(\underset{(n \times 1)}{\mathbf{y}_t}\)</span> um vetor de retornos observados,</li>
+<li class="fragment"><span class="math inline">\(\underset{(r \times 1)}{\xi_t}\)</span> um vetor possívelmente não observado,</li>
+<li class="fragment"><span class="math inline">\(\underset{(k \times 1)}{\mathbf{x}_t}\)</span> um vetor de variáveis exógenas,</li>
+<li class="fragment"><span class="math inline">\(\mathbf{F}_{(r \times r)}, \mathbf{A}_{(n \times k)}', \mathbf{H}'_{(n \times r)}\)</span> matrizes de coeficientes.</li>
+</ul>
+</section>
+<section class="slide level2">
+
+<p>Então, a representação em estado de espaço de um modelo é da forma:</p>
 <div class="fragment">
 <p><span class="math display">\[
-\begin{array}{l}
-  y_t \sim p(y_t|f_t, \cal{F}_t;\theta) \\
-  f_{t+1} = \omega + \sum_{i=1}^p A_is_{t-i+1} + \sum_{j=1}^q B_jf_{t-j+1} \\
-  s_t = S_t\cdot\nabla_t
+\begin{equation}
+\begin{array}{ccl}
+  \mathbf{y}_t &amp; = &amp; \mathbf{A}'\mathbf{x}_t + \mathbf{H}'\xi_t + \mathbf{w}_t \\
+  \xi_{t+1} &amp; = &amp; \mathbf{F}\xi_t + \mathbf{v}_t
 \end{array}
+\end{equation}
 \]</span></p>
 </div>
 <div class="fragment">
-<p>Além disso,</p>
-<p><span class="math display">\[
-\begin{array}{ll}
-  \nabla_t = \frac{\partial lnp(y_t|f_t, \cal{F}_t;\theta)}{\partial f_t}, &amp; S_t = S(t, f_t, \cal{F}_t;\theta)
-\end{array}
-\]</span></p>
+<p>Onde, <span class="math inline">\(\mathbf{v}_t,\mathbf{w}_t \sim WN\)</span></p>
+</div>
+<div class="fragment">
+<p><span class="math inline">\(\textrm{Var}(\mathbf{v}_t) = \mathbf{Q}\)</span> e <span class="math inline">\(\textrm{Var}(\mathbf{w}_t) = \mathbf{R}\)</span>. Além disso, <span class="math inline">\(\textrm{Cov}(\mathbf{v}_t,\mathbf{w}_k) = 0, \forall t,k\)</span>.</p>
+</div>
+<div class="fragment">
+<p>A equação de cima é chamada de <em>observation equation</em>, enquanto a de baixo é chamada de <em>state equation</em>.</p>
 </div>
 </section>
 <section class="slide level2">
 
-<p>Onde,</p>
-<ul>
-<li class="fragment"><span class="math inline">\(f_t\)</span> é o vetor com parâmetros que variam no tempo.</li>
-<li class="fragment"><span class="math inline">\(\theta\)</span> é o vetor com parâmetros estáticos.</li>
-<li class="fragment"><span class="math inline">\(\{f_t,\cal{F}_t\}\)</span> é toda informação disponível até t.</li>
-<li class="fragment"><span class="math inline">\(\omega\)</span> é um vetor de constantes</li>
-<li class="fragment"><span class="math inline">\(A_i\)</span> e <span class="math inline">\(B_j\)</span> são matrizes de coeficientes</li>
-<li class="fragment"><span class="math inline">\(s_t = s_t(y_t, f_t, \cal{F}_t;\theta)\)</span></li>
-</ul>
-</section>
-<section id="casos-especiais" class="slide level2">
-<h2>Casos Especiais</h2>
-<h3 id="modelos-garch">Modelos GARCH</h3>
-</section>
-<section id="volatilidade-estocástica-ve" class="slide level2">
-<h2>Volatilidade Estocástica (VE)</h2>
-<p>O modelo de VE é descrito como:</p>
+<h3 id="exemplos">Exemplos</h3>
+<p>Considere o processo AR(p) dado da forma:</p>
 <p><span class="math display">\[
-\begin{array}{l}
-  r_t = \beta e^{h_t/2}\epsilon_t \\
-  h_t = \phi h_{t-1} + \omega_t
-\end{array}
+y_{t+1} - \mu = \phi_1(y_t - \mu) + \ldots + \phi_p(y_{t-p+1} - \mu) + \epsilon_{t+1}
 \]</span></p>
-<div class="fragment">
-<p>Onde,</p>
-<div class="columns">
-<div class="column" style="width:50%;">
-<ul>
-<li class="fragment"><span class="math inline">\(\epsilon \sim iid(0,1)\)</span></li>
-<li class="fragment"><span class="math inline">\(\{\epsilon_t\}\)</span> e <span class="math inline">\(\{\omega_t\}\)</span> independentes <span class="math inline">\(\forall t\)</span></li>
-</ul>
-</div><div class="column" style="width:50%;">
-<ul>
-<li class="fragment"><span class="math inline">\(\omega_t \sim N(0, \sigma_\omega^2)\)</span></li>
-<li class="fragment"><span class="math inline">\(\sigma_t = \beta e^{h_t/2}\)</span></li>
-</ul>
-</div>
-</div>
-</div>
-</section>
-<section id="referências" class="slide level2">
-<h2>Referências</h2>
-<ul>
-<li class="fragment"><p>Creal, D., Koopman, S. J., and Lucas, A. (2013). Generalized autoregressive score models with applications. Journal of Applied Econometrics, 28(5):777–795</p></li>
-<li class="fragment"><p>Abbara, Omar, and Mauricio Zevallos. “A note on stochastic volatility model estimation.” Brazilian Review of Finance 17.4 (2019): 22-32.</p></li>
-<li class="fragment"><p>Notas de aula ME607, Carlos Trucios</p></li>
-</ul>
+<p>onde <span class="math inline">\(\epsilon_t \sim WN(0, \sigma^2)\)</span></p>
 
 <div class="footer footer-default">
 
