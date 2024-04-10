@@ -1,5 +1,5 @@
 estimacao <- function(n, M) {
-  ## Definindo os vetores de previsões
+  ## Definindo os vetores de previsÃµes
   volgarch_verdadeira <- rep(0, M) ; volgarch_garch <- rep(0, M) ; volgarch_sv <- rep(0, M) ; volgarch_gas <- rep(0, M)
   volsv_verdadeira <- rep(0, M) ; volsv_garch <- rep(0, M) ; volsv_sv <- rep(0, M) ; volsv_gas <- rep(0, M)
   volgas_verdadeira <- rep(0, M) ; volgas_garch <- rep(0, M) ; volgas_sv <- rep(0, M) ; volgas_gas <- rep(0, M)
@@ -18,12 +18,12 @@ estimacao <- function(n, M) {
   
   for (t in 1:M) {
     message(paste0(t, " / ", M))
-    ## Simulação
+    ## SimulaÃ§Ã£o
     amostra_garch <- garch.sim(alpha, beta, n + 1)
     amostra_sv <- svsim(n + 1, mu, phi, sigma)
     amostra_gas <- UniGASSim(T.sim = n + 1, kappa = kappa, A = A, B = B, Dist = dist, ScalingType = Scaling)
     
-    ## Estimação
+    ## EstimaÃ§Ã£o
     # Garch
     fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
     #fit_sv1 <- kalman_filter(amostra_garch[1:n])
@@ -37,7 +37,7 @@ estimacao <- function(n, M) {
     #fit_sv3 <- kalman_filter(amostra_gas@Data$vY[1:n])
     fit_gas3 <- UniGASFit(spec_gas, amostra_gas@Data$vY[1:n])
     
-    ## Previsão One-step-ahead
+    ## PrevisÃ£o One-step-ahead
     # Garch
     fore_garch1 <- ugarchforecast(fit_garch1, n.ahead = 1)
     #fore_sv <- KalmanForecast()
@@ -72,9 +72,3 @@ estimacao <- function(n, M) {
   
   return(dados)
 }
-
-
-dados <- estimacao(1000, 5)
-
-
-
