@@ -1,0 +1,359 @@
+---
+title: "Estimação de parâmetros"
+subtitle: "Volatilidade Estocástica"
+format: 
+  pdf:
+    toc: true
+    toccolor: blue
+    toc-title: Sumário
+    number-sections: true
+    colorlinks: true
+---
+
+```{r, echo=FALSE, eval=FALSE}
+# fontes
+fontes <- systemfonts::system_fonts()
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(forecast)
+library(patchwork)
+```
+
+
+# Introdução
+
+```{r, message=FALSE, warning=FALSE}
+library(stochvol)
+```
+
+
+O pacote `stochvol` conta com 4 funções principais para estimarmos os parâmetros do modelo de volatilidade estocástica com uma abordagem bayesiana.
+
+As 4 funções utilizam do algoritmo MCMC para funcionar, e na prática, são apenas variações convenientes umas das outras. São elas: `svsample`, `svtsample`, `svlsample` e `svtlsample`. Onde, a 3 últimas são equivalentes a primeira com algumas alterações (erros t, leverage e erros t + leverage, respectivamente).
+
+## `svsample`
+
+### Argumentos
+
+A função `svsample` conta com os seguintes argumentos:
+
+- `y`: dados.
+- `draws`: tamanho das cadeias.
+- `burnin`: números de draws a serem desconsiderados.
+- `designmatrix`: matrix de design para modelar a média.
+- `prior+`: onde + é o parâmetro cuja priori queremos especificar (pode ser mu, sigma, nu, rho, beta).
+- `priorlatente0`: ou "Stationary" para usar como piori para $h_0$ a distribuição estacionária do processo latente AR(1), ou `numeric` B para considerar como priori $h_0 \sim N(\mu, B\sigma^2)$.
+- `priorspec`: para utilizar outras prioris além das padrões.
+- `n_chains`: número de cadeias independentes.
+
+Além de alguns outros argumentos opcionais (como argumentos para controlar o número de CPU's para computar as cadeias).
+
+### Valores
+
+Os resultados da função são:
+
+- `para`: parâmetros
+- `latent`: log-volatilidade latente instantânea 
+- `latent0`: log-volatilidade latente inicial
+- `tau`: fator de inflação da variância latente
+- `beta`: coeficientes da regressão (opcional)
+- `y`: dados
+- `runtime`: run time
+- `priors`: parâmetros das prioris consideradas para os parâmetros dos modelos
+- `summary`: estatísticas sumárias a posteriori
+- `meanmodel`: informações sobre a matriz de design
+
+
+## Pacote vs Artigo
+
+O modelo de volatilidade estocástica que o pacote utiliza é descrito de outra forma do que no artigo "*A note on stochastic volatility model estimation*". No artigo, os únicos parâmetros a serem estimados são $\beta$ e $\phi$, já no pacote os parâmetros são $\mu$ e $\phi$.
+
+Os modelos são definidos da seguinte forma:
+
+Artigo,
+$$
+\begin{array}{ccl}
+  r_t & = & \beta e^{h_t/2}\epsilon_t \\
+  h_t & = & \phi h_{t-1} + \omega_t
+\end{array}
+$$
+Pacote,
+$$
+\begin{array}{ccl}
+  r_t & = & e^{h_t/2}\epsilon_t \\
+  h_t & = & \mu + \phi(h_{t-1} - \mu) + \omega_t
+\end{array}
+$$
+
+Podemos escrever $\beta$ em função de $\mu$ (*level* do processo AR(1)) e $\phi$ (*persistence* do processo AR(1)), da seguinte forma: 
+
+$$
+\beta = e^{\mu(1-\phi)/2} \implies \mu = \frac{2\ln\beta}{1-\phi}
+$$
+
+# Aplicação
+
+## Simulação
+
+Vamos simular dados de um modelo de volatilidade estocástica através da função pronta do modelo e da função que eu criei, para comparar os resultados.
+
+Vou simular 4 modelos com as seguintes especificações:
+
+- Modelo 1: $\mu = -10$, $\phi = 0.99$, $sigma = 0.2$
+- Modelo 2: $\mu = -15$, $\phi = 0.98$, $sigma = 0.6$
+- Modelo 3: $\mu = -10$, $\phi = 0.98$, $sigma = 0.5$
+- Modelo 4: $\mu = -15$, $\phi = 0.99$, $sigma = 0.6$
+
+**obs**: os parâmetros $\nu = \infty$ (graus de liberdade correspondendo uma normal padrão), e $rho = 0$ correspondem ao modelo SV básico.
+
+**obs2**: A função que transforma $\beta$ em $\mu$ e vice-versa é:
+```{r}
+beta_mu <- function(x, phi, to_mu=TRUE) {
+  # Caso to_mu=TRUE a função transforma um valor beta em mu
+  # Caso FALSE a função transforma um valor mu em beta
+  if (to_mu) {
+    mu <- (2*log(x)) / (1 - phi)
+    return(mu)
+  }
+  
+  beta <- exp((x * (1 - phi))/2)
+  return(beta)
+}
+```
+
+A simulação das séries se encontra abaixo:
+```{r}
+set.seed(236106)
+
+amostra1 <- svsim(1000, mu = -10, phi = .99, sigma =  0.2)
+
+amostra2 <- svsim(1000, mu = -15, phi = .98, sigma =  0.6)
+
+amostra3 <- svsim(1000, mu = -10, phi = .98, sigma =  0.5)
+
+amostra4 <- svsim(1000, mu = -15, phi = .99, sigma =  0.6)
+```
+
+
+Os gráficos dos valores simulados e suas volatilidades estão apresentados abaixo:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+retornos <- data.frame(index = 1:length(amostra1$y),
+  serie1 = amostra1$y, serie2 = amostra2$y, 
+  serie3 = amostra3$y, serie4 = amostra4$y)
+
+volatilidades <- data.frame(index = 1:length(amostra1$vol),
+  serie1 = amostra1$vol, serie2 = amostra2$vol, 
+  serie3 = amostra3$vol, serie4 = amostra4$vol)
+
+nomes_modelos <- list(
+  "serie1" = "Modelo 1",
+  "serie2" = "Modelo 2",
+  "serie3" = "Modelo 3",
+  "serie4" = "Modelo 4"
+)
+
+modelos_labeller <- function(variable, value){
+  return(nomes_modelos[value])
+}
+
+retornos %>% 
+  pivot_longer(cols = 2:5, names_to = "serie", 
+               values_to = "retorno") %>% 
+  ggplot(aes(x = index, y = retorno, color = serie)) +
+  geom_line(show.legend = F) +
+  facet_wrap(~serie, labeller = modelos_labeller) +
+  labs(x = "", y = "Retorno", title = "Retornos simulados para um SV") +
+  theme_bw()
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+volatilidades %>% 
+  pivot_longer(cols = 2:5, names_to = "serie", 
+               values_to = "vol") %>% 
+  ggplot(aes(x = index, y = vol, color = serie)) +
+  geom_line(show.legend = F) +
+  facet_wrap(~serie, labeller = modelos_labeller) +
+  labs(x = "", y = "Volatilidade", title = "Volatilidades simulados para um SV") +
+  theme_bw()
+```
+
+As funções de autocorrelações e seus quadrados são mostradas abaixo:
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+s11 <- ggAcf(retornos$serie1) + labs(x = "", y = "",
+                               title = "Modelo 1") + theme_bw() +
+  lims(y = c(-.08, .08)) + theme(title = element_text(size = 8))
+s12 <- ggAcf(retornos$serie2) + labs(x = "", y = "",
+                               title = "Modelo 2") + theme_bw() +
+  lims(y = c(-.08, .08)) + theme(title = element_text(size = 8))
+s21 <- ggAcf(retornos$serie3) + labs(x = "", y = "",
+                               title = "Modelo 3") + theme_bw() +
+  lims(y = c(-.08, .08)) + theme(title = element_text(size = 8))
+s22 <- ggAcf(retornos$serie4) + labs(x = "", y = "",
+                               title = "Modelo 4") + theme_bw() +
+  lims(y = c(-.08, .08)) + theme(title = element_text(size = 8))
+
+
+graf <- (s11 + s12) / (s21 + s22)
+gf <- patchworkGrob(graf)
+gridExtra::grid.arrange(gf, left = "Acf", bottom = "Defasagem")
+```
+
+
+```{r, echo=F, warning=FALSE, message=FALSE}
+s11 <- ggAcf(retornos$serie1^2) + labs(x = "", y = "",
+                               title = "Modelo 1") + theme_bw() +
+  lims(y = c(-.1, .6)) + theme(title = element_text(size = 8))
+s12 <- ggAcf(retornos$serie2^2) + labs(x = "", y = "",
+                               title = "Modelo 2") + theme_bw() +
+  lims(y = c(-.1, .6)) + theme(title = element_text(size = 8))
+s21 <- ggAcf(retornos$serie3^2) + labs(x = "", y = "",
+                               title = "Modelo 3") + theme_bw() +
+  lims(y = c(-.1, .6)) + theme(title = element_text(size = 8))
+s22 <- ggAcf(retornos$serie4^2) + labs(x = "", y = "",
+                               title = "Modelo 4") + theme_bw() +
+  lims(y = c(-.1, .6)) + theme(title = element_text(size = 8))
+
+
+graf <- (s11 + s12) / (s21 + s22)
+gf <- patchworkGrob(graf)
+gridExtra::grid.arrange(gf, left = "Acf²", bottom = "Defasagem")
+```
+
+
+## Estimação
+
+Para fazer estimação, irei considerar as prioris padrões.
+
+- $\mu \sim N(0, 100)$ (priori não-informativa)
+
+- $\frac{\phi + 1}{2} \sim Beta(5, 1.5)$
+
+- $\sigma^2 \sim \sigma_0\cdot\chi^2_1$ (onde $\sigma_0$ é o sigma a priori, por *default* = 1).
+
+E estimei com os argumentos default:
+
+```{r, message=FALSE, warning=FALSE}
+# Estimações dos parâmetros
+draws1 <- svsample(amostra1$y, draws = 10000)
+draws2 <- svsample(amostra2$y, draws = 10000)
+draws3 <- svsample(amostra3$y, draws = 10000)
+draws4 <- svsample(amostra4$y, draws = 10000)
+```
+
+Os coeficientes estimados para o primeiro modelo foram:
+
+```{r}
+draws1$summary$para[,1]
+```
+
+
+Podemos, também, graficar as densidades estimadas para cada parâmetro de interesse:
+
+```{r, echo=FALSE}
+mu <- draws1$para[[1]][,1]
+phi <- draws1$para[[1]][,2]
+sigma <- draws1$para[[1]][,3]
+
+dados <- data.frame(mu, phi, sigma)
+colnames(dados) <- c("mu", "phi", "sigma")
+
+# graficos das densidades
+mu <- dados %>% 
+  ggplot() + 
+  geom_density(aes(mu), color = "green",
+               fill = "lightgreen", alpha = .8) +
+  labs(x = expression(mu), y = "densidade", 
+       title = expression(paste("Densidade de ", mu))) +
+  theme_bw()
+
+phi <- dados %>% 
+  ggplot() + 
+  geom_density(aes(phi), color = "blue",
+               fill = "lightblue", alpha = .8) +
+  labs(x = expression(phi), y = "densidade", 
+       title = expression(paste("Densidade de ", phi))) +
+  theme_bw()
+
+sigma <- dados %>% 
+  ggplot() + 
+  geom_density(aes(sigma), color = "yellow",
+               fill = "lightyellow", alpha = .8) +
+  labs(x = expression(sigma), y = "densidade", 
+       title = expression(paste("Densidade de ", sigma))) +
+  theme_bw()
+
+
+(phi + sigma) / mu
+```
+
+Os resultados obtidos estão apresentados na tabela abaixo, onde podemos compará-los com os verdadeiros valores dos parâmetros.
+
+```{r, echo=FALSE, eval=FALSE}
+round(draws1$summary$para[,1], 4)
+round(draws2$summary$para[,1], 4)
+round(draws3$summary$para[,1], 4)
+round(draws4$summary$para[,1], 4)
+```
+
+\begin{table}[H]
+\centering
+\caption{Valores estimados para cada modelo.}
+\begin{tabular}{cccc}
+\hline
+\textbf{Modelos} & \textbf{$\mu$} & \textbf{$\phi$} & \textbf{$\sigma$} \\ \hline
+\textbf{1}       & -9.0008        & 0.9838          & 0.1885            \\
+\textbf{2}       & -16.1648       & 0.9778          & 0.6266            \\
+\textbf{3}       & -9.7617        & 0.9652          & 0.6012            \\
+\textbf{4}       & -15.2011       & 0.9930          & 0.5808            \\ \hline
+\end{tabular}
+\end{table}
+
+
+\begin{table}[H]
+\centering
+\caption{Valores verdadeiros dos parâmetros, por modelo.}
+\begin{tabular}{cccc}
+\hline
+\textbf{Modelos} & \textbf{$\mu$} & \textbf{$\phi$} & \textbf{$\sigma$} \\ \hline
+\textbf{1}       & -10            & 0.99            & 0.2               \\
+\textbf{2}       & -15            & 0.98            & 0.6               \\
+\textbf{3}       & -10            & 0.98            & 0.5               \\
+\textbf{4}       & -15            & 0.99            & 0.6               \\ \hline
+\end{tabular}
+\end{table}
+
+Podemos ainda melhorar a estimação colocando algumas informações a priori. Como feito no artigo do professor Maurício, podemos considerar como valor inicial para $\beta$ a média incondicional da série simulada, e comparar a estimação com aquela feita sem essa informação prévia. 
+
+O único problema que encontrei é que, para transformarmos de $\beta$ para $\mu$, precisamos do valor de $\phi$. Talvez uma alternativa seja estimar o valor de $\phi$ sem considerar nenhuma priori específica, e depois usar essa estimativa para encontrar $\mu$, dado $\beta$.
+
+## Predição
+
+A predição das observações é feita através da função `predict`. Caso estejamos interessados em fazer um *Rolling windows*, podemos utilizar a função `svlsample_roll`.
+
+### Exemplo
+
+- Fazer a previsão do modelo 1 para 3 passos a frente:
+
+```{r}
+fore <- predict(draws1, 3)
+summary(predlatent(fore))
+```
+
+```{r}
+summary(predy(fore))
+```
+
+```{r}
+plot(fore)
+```
+
+
+```{r}
+plot(draws1, forecast = fore)
+```
+

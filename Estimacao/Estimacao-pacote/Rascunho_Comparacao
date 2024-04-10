@@ -1,0 +1,44 @@
+#######################################################################
+##########                 Criando o algoritmo               ##########
+#######################################################################
+
+A comparação dos modelos será feita via previsão one-step-ahead de uma série de T observações. Para isso, devo fazer:
+
+Parte I: o algoritmo
+
+1. Simulação de 3 séries: 1 garch, 1 sv e 1 gas. Todas com T + 1 obs.
+2. Estimação das séries pelos 3 modelos, e previsão one-step-ahead
+3. Comparação do valor predito e o valor verdadeiro da observação T + 1
+4. Repetir, em loop, as partes 1. 2. 3. por M vezes, salvando um vetor com os valores reais da volatilidade para T + 1 e um com o valor previsto para volatilidade para T + 1.
+5. Salvar as medidas de erro calculada em cima dos vetores de erros criados.
+
+* Obs 1: para a comparação, salvar um vetor com o valor simulado (verdadeiro) e um com o valor predito. Posteriormente, calcular o RMSE bem como outras medidas de erro para a comparação.
+
+* Obs 2: a previsão one-step-ahead deverá ser feita sobre a volatilidade da série. Como são dados simulados, temos acesso as volatilidades reais.
+
+* Obs 3: um valor para M pode ser, por exemplo, 10.000
+
+Parte II: expandindo o algortimo
+
+1. Repetir a parte I para T = 500 (amostra inconsistente), T = 1000 (amostra consistente) e T = 2500 (amostra ideal).
+2. Repetir a parte I + parte II (1.) para diferentes valores dos coeficientes.
+
+* Obs: podemos fazer 2 cenários, um onde os coeficientes funcionam normalmente, outro onde eles são levados a algum limite (ex garch: sum(alpha + beta) perto de 1).
+
+
+#######################################################################
+##########                 Criando as Tabelas                ##########
+#######################################################################
+
+As tabelas apresentarão as medidades de erro dos modelos (colunas) x DGPs (linhas). cada tabela será feita de acordo com uma configuração de T e de parâmetros.
+
+Ou seja, para cada configuração de parâmetros haverá 3 tabelas: T = 500, T = 1000, T = 2500.
+
+DGP's são as amostras simuladas por algum modelo.
+  - DGP1: garch
+  - DGP2: sv
+  - DGP3: gas
+  
+valor estimado de tabelas: 18 tabelas únicas ou 6 tabelas juntando os diferentes T's em cada uma (diferentes tabelas apresentando diferentes configurações de parâmetros).
+
+

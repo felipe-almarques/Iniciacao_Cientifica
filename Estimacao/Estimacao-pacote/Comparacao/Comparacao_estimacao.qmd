@@ -1,0 +1,132 @@
+---
+title: "Estimação de parâmetros"
+subtitle: "Garch(p,q)"
+format: 
+  pdf:
+    toc: true
+    toccolor: blue
+    toc-title: Sumário
+    number-sections: true
+    colorlinks: true
+---
+
+```{r, echo=FALSE, eval=FALSE}
+# fontes
+fontes <- systemfonts::system_fonts()
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(forecast)
+library(patchwork)
+```
+
+
+# Introdução
+
+```{r, message=FALSE, echo=FALSE}
+library(rugarch)
+library(stochvol)
+library(GAS)
+```
+
+Nesse documento, irei simular 3 amostras aleatórias de modelos de volatilidade, seguindo um modelo Garch, SV e GAS, respectivamente.
+
+O objetivo será comparar a qualidade da estimação de cada modelo para as 3 amostras de dados. Essa comparação será feita via $RMSE$ calculado onde os erros de estimação serão calculados pelo método *rolling windows*. 
+
+$$
+RMSE = \sqrt\left(\frac{\hat{e}}{n}\rigth)
+$$
+
+# Simulação
+
+## Os modelos
+
+## Análise Descritiva
+
+
+# Estimação
+
+## Ajustando os modelos
+
+## Diagnóstico dos modelos
+
+
+# Comparação dos Modelos
+
+## Aplicação do *Rolling Windows*
+
+## Predição
+
+Aqui, faço um **rolling windows** para avaliar a acurácia do modelo.
+
+```{r, eval=FALSE}
+# Rolling Windows
+m <- 100 # tamanho da janela
+
+e_hat11 <- rep(0, n - m)
+e_hat12 <- rep(0, n - m)
+e_hat21 <- rep(0, n - m)
+e_hat22 <- rep(0, n - m)
+
+for (i in 1:(n - m)) {
+  message(paste0(i, "/ ", n - m))
+  
+  # Estimando
+  fit11_rw <- ugarchfit(spec11, amostra1$returns[i:(i + m - 1)])
+  fit12_rw <- ugarchfit(spec12, amostra12$returns[i:(i + m - 1)])
+  fit21_rw <- ugarchfit(spec21, amostra21$returns[i:(i + m - 1)])
+  fit22_rw <- ugarchfit(spec22, amostra22$returns[i:(i + m - 1)])
+  
+  # Prevendo
+  prev11 <- ugarchforecast(fit11_rw, n.ahead = 1)
+  prev12 <- ugarchforecast(fit12_rw, n.ahead = 1)
+  prev21 <- ugarchforecast(fit21_rw, n.ahead = 1)
+  prev22 <- ugarchforecast(fit22_rw, n.ahead = 1)
+  
+  # Calculando a diferença
+  e_hat11[i] <- amostra1$volatility[i + m] - sigma(prev11)
+  e_hat12[i] <- amostra12$volatility[i + m] - sigma(prev12)
+  e_hat21[i] <- amostra21$volatility[i + m] - sigma(prev21)
+  e_hat22[i] <- amostra22$volatility[i + m] - sigma(prev22)
+}
+
+#save(e_hat11, file = "../artifacts/e_hat11_garch.RData")
+#save(e_hat12, file = "../artifacts/e_hat12_garch.RData")
+#save(e_hat21, file = "../artifacts/e_hat21_garch.RData")
+#save(e_hat22, file = "../artifacts/e_hat22_garch.RData")
+```
+
+```{r, echo=FALSE}
+load(file = "../artifacts/e_hat11_garch.RData")
+load(file = "../artifacts/e_hat12_garch.RData")
+load(file = "../artifacts/e_hat21_garch.RData")
+load(file = "../artifacts/e_hat22_garch.RData")
+```
+
+A raíz do Erro Quadrático Médio (RMSE) para um passo a frente é dado por:
+
+```{r, eval=FALSE}
+rmse11 <- sqrt(sum(e_hat11^2) / n)
+rmse12 <- sqrt(sum(e_hat12^2) / n)
+rmse21 <- sqrt(sum(e_hat21^2) / n)
+rmse22 <- sqrt(sum(e_hat22^2) / n)
+
+round(rmse11, 4) ; round(rmse12, 4); round(rmse21, 4) ; round(rmse22, 4)
+```
+
+Daí, O RSME dos modelos foram:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ccccc}
+\hline
+\textbf{Modelo} & \textbf{Garch(1, 1)} & \textbf{Garch(1, 2)} & \textbf{Garch(2, 1)} & \textbf{Garch(2,2)} \\ \hline
+\textbf{RMSE}   & 0.2607               & 0.2225               & 0.2598               & 0.214               \\ \hline
+\end{tabular}
+\end{table}
+
+
+
+
