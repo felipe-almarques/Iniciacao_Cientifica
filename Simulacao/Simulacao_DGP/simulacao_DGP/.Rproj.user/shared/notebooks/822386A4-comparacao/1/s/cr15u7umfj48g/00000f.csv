@@ -1,0 +1,4 @@
+"0","# Utilizando o pacote TSA"
+"0","set.seed(236106)"
+"0","serie1 <- garch.sim(alpha = c(.002, .004, .013, .025, .03, .2), "
+"0","                    beta = c(.02, .13, .2, .3), n = 1500)"

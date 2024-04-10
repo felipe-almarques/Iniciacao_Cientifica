@@ -1,0 +1,30 @@
+"0","library(rugarch)"
+"2","Warning: package ‘rugarch’ was built under R version 4.1.3"
+"2","Carregando pacotes exigidos: parallel
+"
+"2","
+Attaching package: ‘rugarch’
+
+"
+"2","The following object is masked from ‘package:stats’:
+
+    sigma
+
+"
+"0","library(TSA)"
+"2","Warning: package ‘TSA’ was built under R version 4.1.3"
+"2","
+Attaching package: ‘TSA’
+
+"
+"2","The following objects are masked from ‘package:stats’:
+
+    acf, arima
+
+"
+"2","The following object is masked from ‘package:utils’:
+
+    tar
+
+"
+"0","source(""garch_sim.R"")"

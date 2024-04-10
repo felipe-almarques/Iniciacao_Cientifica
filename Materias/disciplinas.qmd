@@ -1,6 +1,0 @@
----
-title: "Disciplinas"
-sidebar: false
----
-
-Aqui colocarei algumas anotações e trabalhos desenvolvidos para algumas disciplinas da faculdade.

@@ -1,0 +1,376 @@
+---
+title: "Comparação das funções"
+author: "Felipe Marques"
+format: html
+editor: visual
+---
+
+# Comparação entre as funções criadas e existentes
+
+```{r, echo=F, message=F, warning=F}
+library(tidyverse)
+library(patchwork)
+```
+
+Nesse documento, fiz uma comparação entre as funções de *data generated process* construídas nos arquivos `garch_sim.R`, `gas_sim.R` e `sv_sim.R` e aquelas já existentes nos pacotes `TSA`, `gas` e `sv`.
+
+Para efeito de comparação, irei simular 10.000 observações de cada processo duas vezes (uma com a função dos pacotes, outra com a função que eu criei) mantendo os mesmos parâmetros, para poder comparar os gráficos `ts.series` e as acfs e pacfs. Por fim, tentarei estimar ambas as séries na esperança de obter estimativas parecidas em ambos os casos.
+
+## Garch
+
+```{r, echo=FALSE}
+library(rugarch)
+library(TSA)
+source("garch_sim.R")
+```
+
+No caso GARCH, a função do pacote *TSA* que simula modelos GARCH é *garch.sim*. Já a função que eu criei é *garch_sim*.
+
+A estimação dos parâmetros foi feita com o pacote *rugarch*, utilizando a função *ugarchspec* e *ugarchXXXX*.
+
+### Simulando dados
+
+Simulamos 1500 observações para cada um dos 3 modelos:
+
+1.  Garch(1, 1) -> com $\omega = 0.005$, $\alpha = 0.08$ e $\beta = 0.85$. $\alpha + \beta = 0.93$
+2.  Garch(2, 3) -> com $\omega = 0.01$, $\alpha = [0.05,~ 0.08]$ e $\beta = [0.013,~ 0.4,~ 0.2]$. $\sum_{i=1}^2\alpha_i + \sum_{j=1}^3\beta_j = 0.743 < 1$.
+3.  Garch(5, 4) -> com $\omega = 0.002$, $\alpha = [0.004,~ 0.013,~ 0.025,~ 0.03,~ 0.2]$ e $\beta = [0.02,~0.13,~0.2,~0.3]$. $\sum_{i=1}^5\alpha_i + \sum_{j=1}^4\beta_j = 0.922 < 1$.
+
+#### Primeiro Modelo
+
+```{r}
+# Utilizando o pacote TSA
+set.seed(236106)
+serie1 <- garch.sim(alpha = c(.005, .08), beta = .85, n = 1500)
+```
+
+```{r}
+# Utilizando a função criada
+set.seed(236106)
+serie2 <- garch_sim(n = 1500, alpha = c(.005, .08), beta = .85)
+```
+
+O gráfico das séries são apresentados abaixo:
+
+```{r}
+dados <- data.frame(serie1, serie2, y=1:1500)
+
+dados %>% 
+  ggplot() + 
+  geom_line(aes(x = y, y = serie1, color = "Pacote")) +
+  geom_line(aes(x = y, y = serie2, color = "Criada")) + 
+  labs(x = "x", y = "y", color = "Legenda",
+       title = "Comparação dos modelos") +
+  theme_bw()
+```
+
+Os gráficos da acf e pacf para o modelo garch do *TSA* é: 
+```{r}
+par(mfrow = c(1,2))
+stats::acf(serie1^2)
+stats::pacf(serie1^2)
+```
+
+Já para a função criada é:
+
+```{r}
+par(mfrow = c(1,2))
+stats::acf(serie2^2)
+stats::pacf(serie2^2)
+```
+
+
+```{r}
+# Estimando o primeiro modelo
+```
+
+#### Segundo modelo
+
+```{r}
+# Utilizando o pacote TSA
+set.seed(236106)
+serie1 <- garch.sim(alpha = c(.01, .05, .08), 
+                    beta = c(.13, .4, .2), n = 1500)
+```
+
+```{r}
+# Utilizando a função criada
+set.seed(236106)
+serie2 <- garch_sim(n = 1500, alpha = c(.01, .05, .08), 
+                    beta = c(.13, .4, .2))
+```
+
+O gráfico das séries, acf's e pacf's são apresentados abaixo:
+
+```{r}
+dados <- data.frame(serie1, serie2, y=1:1500)
+
+dados %>% 
+  ggplot() + 
+  geom_line(aes(x = y, y = serie1, color = "Pacote")) +
+  geom_line(aes(x = y, y = serie2, color = "Criada")) + 
+  labs(x = "x", y = "y", color = "Legenda",
+       title = "Comparação dos modelos") +
+  theme_bw()
+```
+
+Os gráficos da acf e pacf para o modelo garch do *TSA* é: 
+```{r}
+par(mfrow = c(1,2))
+stats::acf(serie1^2)
+stats::pacf(serie1^2)
+```
+
+Já para a função criada é:
+
+```{r}
+par(mfrow = c(1,2))
+stats::acf(serie2^2)
+stats::pacf(serie2^2)
+```
+
+
+```{r}
+# Estimando o primeiro modelo
+```
+
+#### Terceiro modelo
+
+```{r}
+# Utilizando o pacote TSA
+set.seed(236106)
+serie1 <- garch.sim(alpha = c(.002, .004, .013, .025, .03, .2), 
+                    beta = c(.02, .13, .2, .3), n = 1500)
+```
+
+```{r}
+# Utilizando a função criada
+set.seed(236106)
+serie2 <- garch_sim(n = 1500, alpha = c(.002, .004, .013, .025, .03, .2), 
+                    beta = c(.02, .13, .2, .3))
+```
+
+O gráfico das séries, acf's e pacf's são apresentados abaixo:
+
+```{r}
+dados <- data.frame(serie1, serie2, y=1:1500)
+
+dados %>% 
+  ggplot() + 
+  geom_line(aes(x = y, y = serie1, color = "Pacote")) +
+  geom_line(aes(x = y, y = serie2, color = "Criada")) + 
+  labs(x = "x", y = "y", color = "Legenda",
+       title = "Comparação dos modelos") +
+  theme_bw()
+```
+
+Os gráficos da acf e pacf para o modelo garch do *TSA* é: 
+```{r}
+par(mfrow = c(1,2))
+stats::acf(serie1^2)
+stats::pacf(serie1^2)
+```
+
+Já para a função criada é:
+
+```{r}
+par(mfrow = c(1,2))
+stats::acf(serie2^2)
+stats::pacf(serie2^2)
+```
+
+
+```{r}
+# Estimando o primeiro modelo
+```
+
+
+## Stochastic Volatility
+
+```{r}
+library(stochvol)
+source("sv_sim.R")
+source("sv_sim2.R")
+```
+
+**Observação:** A função *sv_sim* criada, foi inspirada no modelo sv simples apresentado em Taylor (1982, 1986), que considera o processo AR(1) da log-volatilidade latente como $h_t = \phi h_{t-1} + \omega_t$, onde $\omega_t \sim N(0, \sigma_\omega^2)$ e os retornos são dados por $y_t = \beta e^{h_T/2}\epsilon_t$. A função *svsim* do pacote *stochvol* tem o argumento *mu* como sendo o nível do processo AR(1). O modelo utilizado no pacote stochvol define
+
+$$
+y_t = e^{h_t/2}\epsilon_t \\ h_t = \mu + \phi(h_{t-1} - \mu) + \sigma\eta_t, ~~\eta_t \sim N(0,1)
+$$
+
+Daí, segue que
+
+$$
+h_t = \mu(1 - \phi) + \phi h_{t-1} + \sigma\eta_t \\ \implies
+y_t = e^{h_t}\epsilon_t = exp\left\{ \frac{\mu(1-\phi) + \phi h_{t-1} + \omega_t}{2}\right\}\epsilon_t,~~\sigma\eta_t = \omega_t \\
+= e^{\frac{\mu(1-\phi)}{2}}e^{\frac{\phi h_{t-1} + \omega_t}{2}}\epsilon_t = \beta e^{h_t/2}\epsilon_t
+$$
+onde $\beta = e^{\mu(1-\phi)/2}$ e $h_t = \phi h_{t-1} + \omega_t,~~\omega_t \sim N(0, \sigma^2)$.
+
+Por fim, os argumentos *nu* e *rho* que representam os graus de liberdade da distribuição condicional e a correlação entre as observações e o incremento da log-volatilidade, serão mantidos como defaut, representando o modelo simples de sv, com distribuição normal padrão.
+
+### Simulando dados
+
+Simulamos 1500 observações para cada um dos 3 modelos:
+
+1. $\beta = .9512294$, $\phi = .99$, $\sigma^2_\omega = .1$; ($\mu = -10$)
+
+2. $\beta = .860708$, $\phi = .94$, $\sigma^2_\omega = .15$; ($\mu = -5$)
+
+3. $\beta = .9139312$, $\phi = .91$, $\sigma^2_\omega = .05$; ($\mu = -2$)
+
+#### Primeiro modelo
+
+```{r}
+# Pacote stochvol
+set.seed(236106)
+serie1 <- svsim(len = 1500, phi = .99, sigma = .1, mu = -10)
+serie1 <- serie1$y
+```
+
+```{r}
+# Função criada
+set.seed(236106)
+serie2 <- sv_sim(1500, phi = .99, sigma = .1, beta = .9512294)
+```
+
+```{r}
+# Função sv_sim2
+set.seed(236106)
+serie2 <- sv_sim2(1500, mu = -10, phi = .99, sigma = .1)
+```
+
+```{r}
+ts.plot(serie2)
+```
+
+
+Os gráficos das séries são apresentadas abaixo:
+
+```{r}
+dados <- data.frame(serie1, serie2, y=1:1500)
+
+dados %>% 
+  ggplot() + 
+  geom_line(aes(x = y, y = serie1, color = "Pacote")) +
+  geom_line(aes(x = y, y = serie2, color = "Criada")) + 
+  labs(x = "x", y = "y", color = "Legenda",
+       title = "Comparação dos modelos") +
+  theme_bw()
+```
+
+Os gráficos da acf e pacf dos modelos são
+
+```{r}
+# Pacote stochvol
+stats::acf(serie1^2)
+stats::pacf(serie1^2)
+```
+
+```{r}
+# Função criada
+stats::acf(serie2^2)
+stats::pacf(serie2^2)
+```
+
+```{r}
+# Estimando os parâmetros
+```
+
+#### Segundo Modelo
+
+```{r}
+# Pacote stochvol
+set.seed(236106)
+serie1 <- svsim(len = 1500, phi = .94, sigma = .15, mu = -5)
+serie1 <- serie1$y
+```
+
+```{r}
+# Função criada
+set.seed(236106)
+serie2 <- sv_sim(1500, phi = .94, sigma = .15, beta = .860708)
+```
+
+Os gráficos das séries são apresentadas abaixo:
+
+```{r}
+dados <- data.frame(serie1, serie2, y=1:1500)
+
+dados %>% 
+  ggplot() + 
+  geom_line(aes(x = y, y = serie1, color = "Pacote")) +
+  geom_line(aes(x = y, y = serie2, color = "Criada")) + 
+  labs(x = "x", y = "y", color = "Legenda",
+       title = "Comparação dos modelos") +
+  theme_bw()
+```
+
+Os gráficos da acf e pacf dos modelos são
+
+```{r}
+# Pacote stochvol
+stats::acf(serie1^2)
+stats::pacf(serie1^2)
+```
+
+```{r}
+# Função criada
+stats::acf(serie2^2)
+stats::pacf(serie2^2)
+```
+
+```{r}
+# Estimando os parâmetros
+```
+
+#### Terceiro Modelo
+
+```{r}
+# Pacote stochvol
+set.seed(236106)
+serie1 <- svsim(len = 1500, phi = .91, sigma = .05, mu = -2)
+serie1 <- serie1$y
+```
+
+```{r}
+# Função criada
+set.seed(236106)
+serie2 <- sv_sim(1500, phi = .91, sigma = .05, beta = .9139312)
+```
+
+Os gráficos das séries são apresentadas abaixo:
+
+```{r}
+dados <- data.frame(serie1, serie2, y=1:1500)
+
+dados %>% 
+  ggplot() + 
+  geom_line(aes(x = y, y = serie1, color = "Pacote")) +
+  geom_line(aes(x = y, y = serie2, color = "Criada")) + 
+  labs(x = "x", y = "y", color = "Legenda",
+       title = "Comparação dos modelos") +
+  theme_bw()
+```
+
+Os gráficos da acf e pacf dos modelos são
+
+```{r}
+# Pacote stochvol
+stats::acf(serie1^2)
+stats::pacf(serie1^2)
+```
+
+```{r}
+# Função criada
+stats::acf(serie2^2)
+stats::pacf(serie2^2)
+```
+
+```{r}
+# Estimando os parâmetros
+```
+
+
+## GAS

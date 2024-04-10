@@ -1,0 +1,10 @@
+function dLoglike = gaussianCopulaGASmodel(mData, vParms)
+
+dLoglike = 0;
+iT = size(mData,1);
+
+vFact
+for t=1:iT
+end
+
+return;

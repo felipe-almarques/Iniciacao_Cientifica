@@ -1,5 +1,0 @@
----
-title: "Análise de Sobrevivência"
-subtitle: "ME925"
-sidebar: false
----

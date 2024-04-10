@@ -1,0 +1,57 @@
+
+clc;
+clear all;
+close all;
+
+% True value of parameters
+vEta = [-3.5;-4];	% intercept parameters (baseline intensities)
+mAlpha = [1;-1];	% factor loadings
+vOmega = 0;         % factor recursion mean is set to zero for identification
+mA = 0.025;         % A parameter in GAS recursion
+mB = 0.95;          % B parameter in GAS recursion
+
+iN = 2500;  % number of firms in the sample
+iMaxT = 100;
+
+% simulate the model
+[mY, mR, vTau, vFactors] = simulateMarkedPointProcessModel(iN, iMaxT, vEta, mAlpha, mA, mB);
+
+% select the series to estimate
+iT = size(mY,2);
+
+% starting values
+vParmsInit = [-3.5 ; -4 ; -1 ; log(0.025) ; log(0.95/(1-0.95))]; 
+
+opt = optimset('TolX', 0.0001, 'Display', 'off', 'MaxIter', 5000, 'MaxFunEvals', 5000, 'HessUpdate', 'bfgs') ;
+info.mR = mR;
+info.vTau = vTau;
+
+vParms = restrictParmsMarkedPointProcess(vParmsInit);
+[dLoglike, vFactors, vLambda] = markedPointProcessGASmodel(vParms, info, mY);
+
+%dLoglike = loglikelihoodMarkedPointProcessGASmodel(vParmsInit, info, mY);
+
+tic
+[vParms, dLoglike, exitflag, output] = fminsearch('loglikelihoodMarkedPointProcessGASmodel', vParmsInit, opt, info, mY);
+toc
+
+vRestrictedParms = restrictParmsMarkedPointProcess(vParms);
+[dLoglike, vFactors, vLambda] = markedPointProcessGASmodel(vRestrictedParms, info, mY);
+
+mHess = fdhess('loglikelihoodMarkedPointProcessGASmodel',vParms, info, mY);
+vGradient = gradnt('restrictParmsMarkedPointProcess', vParms, 0.001);
+mCovMat = vGradient/mHess;
+mCovMat = mCovMat*vGradient';
+vStdErrors = sqrt(diag(mCovMat)/iT);
+
+fprintf('\n\nGaussian Copula GAS(1,1) model \n');
+fprintf('          Est:          Std Err:         t-val:\n');
+fprintf('eta_1:   %3.4f          %3.4f           %3.4f\n',vRestrictedParms(1),vStdErrors(1,1),vRestrictedParms(1,1)/vStdErrors(1,1));
+fprintf('eta_2:   %3.4f          %3.4f           %3.4f\n',vRestrictedParms(2),vStdErrors(2,1),vRestrictedParms(2,1)/vStdErrors(2,1));
+fprintf('alpha_2: %3.4f          %3.4f           %3.4f\n',vRestrictedParms(3),vStdErrors(3,1),vRestrictedParms(3,1)/vStdErrors(3,1));
+fprintf('a:       %3.4f          %3.4f           %3.4f\n',vRestrictedParms(4),vStdErrors(4,1),vRestrictedParms(4,1)/vStdErrors(4,1));
+fprintf('b:       %3.4f          %3.4f           %3.4f\n',vRestrictedParms(5),vStdErrors(5,1),vRestrictedParms(5,1)/vStdErrors(5,1));
+fprintf('Value of the loglikelihood function: %4.3f\n',dLoglike);
+%printf('Estimation time: %4.3f\n\n',timer);
+
+

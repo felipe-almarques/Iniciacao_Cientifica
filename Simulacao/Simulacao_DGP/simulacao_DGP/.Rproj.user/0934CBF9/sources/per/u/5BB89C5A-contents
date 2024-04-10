@@ -1,0 +1,10 @@
+s <- y^2/(2*sigma2^2) - (1/(2*sigma2))
+sum_A <- A * s
+sum_B <- B * sigma2
+sigma2 <- omega + sum_A + sum_B
+y <- sqrt(sigma2)*epsilon
+epsilon <- rnorm(1)
+
+
+
+s <- 0; y <- 1; epsilon <- rnorm(1); sigma2 <- .5; A <- .3; B <- .2; omega <- .2

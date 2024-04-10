@@ -1,0 +1,50 @@
+
+clc;
+clear all;
+close all;
+
+% the data are the probability integral transforms. These are 
+% uniform random variables on the interval [0, 1];
+load pattonData.mat;
+% column 1: DeutscheMark (Euro)/Dollar
+% column 2: UK pound/Dollar
+% column 3: Swiss Franc/Dollar
+% column 4: Japanese Yen/Dollar
+
+% select the series to estimate
+vS = [1 ; 4];
+mY = data(:,vS)';
+iT = size(mY,2);
+
+% starting values
+vParmsInit = [0.003 ; -3 ; 5]; 
+
+opt = optimset('TolX', 0.0001, 'Display', 'off', 'MaxIter', 5000, 'MaxFunEvals', 5000, 'HessUpdate', 'bfgs') ;
+info = 0;
+
+vParms = restrictParmsGaussianCopula(vParmsInit);
+[dLoglike, vFactors, vRho] = gaussianCopulaGASmodel(vParms, info, mY);
+
+%dLoglike = loglikelihoodGaussianCopulaGASmodel(mY, vParmsInit);
+
+tic
+[vParms, dLoglike, exitflag, output] = fminsearch('loglikelihoodGaussianCopulaGASmodel', vParmsInit, opt, info, mY);
+toc
+
+vRestrictedParms = restrictParmsGaussianCopula(vParms);
+[dLoglike, vFactors, vRho] = gaussianCopulaGASmodel(vRestrictedParms, info, mY);
+
+info = 0;
+mHess = fdhess('loglikelihoodGaussianCopulaGASmodel',vParms, info, mY);
+vGradient = gradnt('restrictParmsGaussianCopula', vParms, 0.001);
+mCovMat = vGradient/mHess;
+mCovMat = mCovMat*vGradient';
+vStdErrors = sqrt(diag(mCovMat)/iT);
+
+fprintf('\n\nGaussian Copula GAS(1,1) model \n');
+fprintf('          Est:          Std Err:         t-val:\n');
+fprintf('omega:   %3.4f          %3.4f           %3.4f\n',vRestrictedParms(1),vStdErrors(1,1),vRestrictedParms(1,1)/vStdErrors(1,1));
+fprintf('a:       %3.4f          %3.4f           %3.4f\n',vRestrictedParms(2),vStdErrors(2,1),vRestrictedParms(2,1)/vStdErrors(2,1));
+fprintf('b:       %3.4f          %3.4f           %3.4f\n',vRestrictedParms(3),vStdErrors(3,1),vRestrictedParms(3,1)/vStdErrors(3,1));
+fprintf('Value of the loglikelihood function: %4.3f\n',dLoglike);
+%printf('Estimation time: %4.3f\n\n',timer);

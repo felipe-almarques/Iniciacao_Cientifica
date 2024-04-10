@@ -1,0 +1,4 @@
+"0","# Pacote stochvol"
+"0","set.seed(236106)"
+"0","serie1 <- svsim(len = 1500, phi = .94, sigma = .15, mu = -5)"
+"0","serie1 <- serie1$y"

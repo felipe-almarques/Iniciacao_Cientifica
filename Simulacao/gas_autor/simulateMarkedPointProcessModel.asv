@@ -1,0 +1,61 @@
+function [mY, mR] = simulateMarkedPointProcessModel(iN, iMaxT, vEta, mAlpha, mA, mB)
+
+
+% initialize
+vR = [iN ; iN];  % mumber of firms exposed to each type of risk (i.e. default or not)
+	
+vFactors = 0;
+vTau = zeros(1,50000);
+mY = zeros(2,50000);
+mR = zeros(2,50000);
+dSpellTotal = 0;
+t = 1;
+
+while dSpellTotal<=iMaxT
+	% extend sample matrices if necessary
+    iT = size(vTau,2);
+	if(t >= iT-1)
+		vTau = [vTau zeros(1,1000)];
+		mY = [mY zeros(2,1000)];
+		mR = [mR zeros(2,1000)];
+    end
+
+	% compute intensities
+	vLambda = vEta + mAlpha * vFactors;
+	vExpLambda = exp(vLambda);
+
+	% set exposures
+    mR(:,t) = vR;
+
+	% generate spell length (duration between events)
+	vTau(t) = -log(1-rand(1,1))/(mR(:,t)'*vExpLambda);
+    % total amount of cumulated time
+	dSpellTotal = dSpellTotal + vTau(t);
+
+	% generate mark (i.e. default or no default)
+    vProb = mR(:,t).*vExpLambda/(mR(:,t)'*vExpLambda);
+	%iD = sumc(rand(1,1) > cumulate(mR(:,t).*vExpLambda)/(mR(:,t)'*vExpLambda));
+    iD = length(find(cumsum(B(mStates(i,t+1)+1,:))<mU(i,t))) + 1;
+	mY(iD,t) = 1;
+
+	% adjust exposures
+	vR(1,1) = vR(1,1) + 2*iD - 1;
+	vR(2,1) = vR(2,1) + 1 - 2*iD;
+
+	% compute GAS step
+	vLmax = max(vLambda);
+	vScore = mAlpha'*(mY(:,t)-vTau(t)*mR(:,t).*vExpLambda);
+    mInfoMatrix = mAlpha'*((mR(:,t).*exp(vLambda-vLmax)/(mR(:,t)'*exp(vLambda-vLmax))).*mAlpha);
+    vSt = mInfoMatrix\vScore;
+    
+	% Gas recursion
+	vFactors = mOmega + mA*vSt + mB*vFactors;
+
+    % increment
+    t = t + 1;
+end
+
+% trim to proper size
+vTau = vTau(1:t-1);
+mY = mY(1:t-1);
+mR = mR(1:t-1);

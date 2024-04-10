@@ -1,0 +1,143 @@
+---
+title: "Seminário - GARCH vs GAS vs VE"
+author: "Felipe Marques"
+format: 
+  revealjs:
+    incremental: true
+    theme: sky
+editor: visual
+---
+
+## Introdução
+
+Ao modelar séries temporais, buscamos capturar as estruturas de dependência para podermos realizar previsões. Para isso, podemos modelar:
+
+-   A média condicional: ARMA, ARIMA, SARIMA, etc.
+
+-   A variância condicional (volatilidade): ARCH, GARCH, GAS, VE, etc.
+
+. . .
+
+Modelos de volatilidade tem especial importância em análises de séries temporais financeiras. E será foco dessa pesquisa.
+
+## Proposta
+
+Comparar os modelos de volatilidade: GARCH , Volatilidade Estocástica e GAS, quanto as consequências da má especificação do modelo.
+
+. . .
+
+-   O que acontece quando tentamos estimar a volatilidade utilizando um modelo diferente daquele que gerou os dados?
+
+-   As estimativas são boas mesmo se não acertarmos na escolha do modelo?
+
+## Classificação de modelos
+
+Os modelos de séries temporias que possuem parâmetros que variam no tempo podem ser classificados em dois grupos:
+
+-   Observation-driven models
+-   Parameters-driven models
+
+## Observation-driven models
+
+Os parâmetros são funções de variáveis dependentes defazadas no tempo. Portanto, dada toda informação passada, eles podem ser totalmente preditos.
+
+-   Ex: Garch, GAS, ACD e ACI, DCC, etc.
+
+. . .
+
+Uma vantagem desse tipo de modelo, é que simplifica o cálculo da verossimilhança.
+
+## Parameters-driven models
+
+Os parâmentros são estocásticos e possuem sua própria fonte de erro. Portanto, dada toda informação passada, eles **não** podem ser totalmente preditos.
+
+-   Ex: Volatilidade Estocástica (VE), Intensidade Estocástica, etc.
+
+. . .
+
+Na maior parte dos casos, a verossimilhança deve ser calculada através de algoritmos computacionais como o MCMC.
+
+# GARCH vs GAS vs VE
+
+## GARCH
+
+O modelo GARCH($p$,$q$) é definido da seguinte forma:
+
+$$
+\begin{array}{l}
+r_t = \sigma_t\epsilon_t \\
+\sigma_t^2 = \omega + \sum_{i=1}^p \alpha_i r_{t-i}^2 + \sum_{j=1}^q \beta_j\sigma_{t-j}^2
+\end{array}
+$$
+
+. . .
+
+Onde,
+
+::: columns
+::: {.column widht="50%"}
+-   $\epsilon \sim iid(0,1)$
+-   $\omega \gt 0$
+:::
+
+::: {.column widht="50%"}
+-   $\alpha_i,\beta_j \ge 0, \forall i,j$
+-   $\sum_{i=1}^p \alpha_i + \sum_{j=1}^q \beta_j \lt 1$ (Estacionaridade)
+:::
+:::
+
+## GAS
+
+O modelo GAS (*Generalized Autoregressive Score model*) é definido como:
+
+. . .
+
+$$
+\begin{array}{l}
+  y_t \sim p(y_t|f_t, \cal{F}_t;\theta) \\
+  f_{t+1} = \omega + \sum_{i=1}^p A_is_{t-i+1} + \sum_{j=1}^q B_jf_{t-j+1} \\
+  s_t = S_t\cdot\nabla_t
+\end{array}
+$$
+
+------------------------------------------------------------------------
+
+Onde,
+
+-   $f_t$ é o vetor com parâmetros que variam no tempo.
+-   $\theta$ é o vetor com parâmetros estáticos.
+
+::: columns
+::: {.column widht="50%"}
+:::
+
+::: {.column widht="50%"}
+:::
+:::
+
+## Volatilidade Estocástica (VE)
+
+O modelo de VE é descrito como:
+
+$$
+\begin{array}{l}
+  r_t = \beta e^{h_t/2}\epsilon_t \\
+  h_t = \phi h_{t-1} + \omega_t
+\end{array}
+$$
+
+. . .
+
+Onde,
+
+::: columns
+::: {.column width="50%"}
+-   $\epsilon \sim iid(0,1)$
+-   $\{\epsilon_t\}$ e $\{\omega_t\}$ independentes $\forall t$
+:::
+
+::: {.column width="50%"}
+-   $\omega_t \sim N(0, \sigma_\omega^2)$
+-   $\sigma_t = \beta e^{h_t/2}$
+:::
+:::

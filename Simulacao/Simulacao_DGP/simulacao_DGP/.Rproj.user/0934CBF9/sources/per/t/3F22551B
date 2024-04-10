@@ -1,0 +1,26 @@
+{
+    "id": "3F22551B",
+    "path": "C:/Users/Família/Desktop/Arquivos/Unicamp/IC/Simulacao/Simulacao_DGP/simulacao_DGP/gas_sim.R",
+    "project_path": "gas_sim.R",
+    "type": "r_source",
+    "hash": "1751078621",
+    "contents": "",
+    "dirty": false,
+    "created": 1706730598122.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "175,0",
+        "scrollLine": "168"
+    },
+    "folds": "22|17|46|2|\n70|21|80|4|\n82|25|92|4|\n96|20|160|2|\n",
+    "lastKnownWriteTime": 1707591466,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1707591466744,
+    "read_only": false,
+    "read_only_alternatives": []
+}

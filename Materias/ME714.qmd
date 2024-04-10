@@ -1,5 +1,0 @@
----
-title: "Análise de Dados Discretos"
-subtitle: "ME714"
-sidebar: false
----
