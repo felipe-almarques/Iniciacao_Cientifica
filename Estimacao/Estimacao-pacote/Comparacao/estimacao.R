@@ -1,16 +1,26 @@
-estimacao <- function(n, M) {
+estimacao <- function(n, M, garch_param, sv_param, gas_param) {
+  # garch_param: list(alpha, beta)
+  # sv_param: list(mu, phi, sigma)
+  # gas_param: list(kappa, A, B, dist, scaling)
+  
+  
+  
   ## Definindo os vetores de previsões
-  volgarch_verdadeira <- rep(0, M) ; volgarch_garch <- rep(0, M) ; volgarch_sv <- rep(0, M) ; volgarch_gas <- rep(0, M)
-  volsv_verdadeira <- rep(0, M) ; volsv_garch <- rep(0, M) ; volsv_sv <- rep(0, M) ; volsv_gas <- rep(0, M)
-  volgas_verdadeira <- rep(0, M) ; volgas_garch <- rep(0, M) ; volgas_sv <- rep(0, M) ; volgas_gas <- rep(0, M)
-  
-  
+  volgarch_verdadeira <- rep(0, M) ; volgarch_garch <- rep(0, M)
+  volgarch_sv <- rep(0, M) ; volgarch_gas <- rep(0, M)
+  volsv_verdadeira <- rep(0, M) ; volsv_garch <- rep(0, M)
+  volsv_sv <- rep(0, M) ; volsv_gas <- rep(0, M)
+  volgas_verdadeira <- rep(0, M) ; volgas_garch <- rep(0, M)
+  volgas_sv <- rep(0, M) ; volgas_gas <- rep(0, M)
   
   ## Definindo parametros
-  alpha <- c(.3, .4) ; beta <- .5
-  mu <- -10 ; phi <- .99 ; sigma <- .2
-  kappa <- c(0, .4) ; A <- matrix(c(0, 0, 0, .3), ncol = 2) 
-  B <- matrix(c(0, 0, 0, .2), ncol = 2) ; dist <- "norm" ; Scaling <- "Identity"
+  alpha <- garch_param$alpha ; beta <- garch_param$beta
+  #mu <- -10 ; phi <- .99 ; sigma <- .2
+  mu <- sv_param$mu ; phi <- sv_param$phi ; sigma <- sv_param$sigma
+  #kappa <- c(0, .1) ; A <- matrix(c(0, 0, 0, .3), ncol = 2) 
+  #B <- matrix(c(0, 0, 0, .2), ncol = 2) ; dist <- "norm" ; Scaling <- "Identity"
+  kappa <- gas_param$kappa ; A <- gas_param$A
+  B <- gas_param$B ; dist <- gas_param$dist ; Scaling <- gas_param$scaling
   
   ## Definindo modelos
   spec_garch <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = F))
