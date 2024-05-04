@@ -1,0 +1,12 @@
+---
+title: "Kalman Filter"
+author: "Felipe Marques"
+format: pdf
+editor: visual
+---
+
+# Introdução
+
+```{r}
+library(kal)
+```
