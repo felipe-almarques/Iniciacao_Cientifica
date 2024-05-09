@@ -41,4 +41,8 @@ ll_sv(params, r = serie, fuller = T)
 *nota*: O algoritmo converge para valores grandes de $\sigma_j^2$. Quando as variâncias das normais que compõe a mistura são pequenas, o algoritmo pode gerar variâncias $\Sigma_{t,j}$ negativas, fazendo com que o algoritmo não convirja.
 
 
+```{r}
+estimacao_sv(params, serie, fuller = F)
+```
 
+*nota 2*: Aparentemente, é melhor não utilizar a transformação de fuller.
