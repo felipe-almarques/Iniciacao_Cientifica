@@ -7,6 +7,38 @@ editor: visual
 
 # Introdução
 
-```{r}
-library(kal)
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(stochvol)
+source("Kalman-filter.R")
 ```
+
+Escrevi uma função de construção da verossimilhança via filtro de Kalman, baseado no artigo "A note on Stochastic Volatility models"
+
+# Simulação
+
+```{r}
+amostra <- svsim(1000, mu = 0, phi = .97, sigma = 1.5)
+serie <- amostra$y
+volatilidade <- amostra$vol
+```
+
+```{r}
+c <- .005
+s2 <- var(serie)
+
+y <- log(serie^2 + c*s2) - (c*s2 / (serie^2 + c*s2))
+```
+
+# Estimação
+
+```{r}
+source("Kalman-filter.R")
+params <- c(.3, .9, .01, 1.5, 1.5, .8, .9)
+ll_sv(params, r = serie, fuller = T)
+```
+
+*nota*: O algoritmo converge para valores grandes de $\sigma_j^2$. Quando as variâncias das normais que compõe a mistura são pequenas, o algoritmo pode gerar variâncias $\Sigma_{t,j}$ negativas, fazendo com que o algoritmo não convirja.
+
+
+
