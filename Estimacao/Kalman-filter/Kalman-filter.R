@@ -59,7 +59,7 @@ ll_sv <- function(params, r, fuller=FALSE, c=0.005) {
   }
   #h <- h[2:n+1] ; P <- P[2:n+1]
   
-  return(loglik_sv)
+  return(-loglik_sv)
 }
 
 estimacao_sv <- function(params, y, fuller=FALSE, c=0.005) {
