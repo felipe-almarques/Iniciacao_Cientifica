@@ -10,12 +10,85 @@ editor: visual
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(stochvol)
+library(patchwork)
 source("Kalman-filter.R")
 ```
 
 Escrevi uma função de construção da verossimilhança via filtro de Kalman, baseado no artigo "A note on Stochastic Volatility models"
 
-# Simulação
+```{r, eval=FALSE}
+ll_sv <- function(params, r, fuller=FALSE, c=0.005) {
+  # transformando os retornos
+  if (fuller){
+    s2 <- var(r)
+    y <- log(r^2 + c*s2) - (c*s2 / (r^2 + c*s2))
+  } else {
+    y <- log(r^2)
+  }
+  
+  # definindo variáveis e os vetores recursivos
+  n <- length(y)
+  loglik_sv <- 0
+  h <- P <- rep(0, n+1)
+  epsilon1 <- epsilon2 <- k1 <- k2 <- rep(0, n)
+  Sigma1 <- Sigma2 <- pi1 <- pi2 <- rep(0, n) 
+
+  # definindo os parâmetros
+  alpha <- params[1]; phi <- params[2]; sigmaw <- params[3]
+  sigma1 <- params[4]; sigma2 <- params[5]; mu1 <- params[6]
+  mu2 <- params[7]
+
+  # definindo valores iniciais
+  P[1] <- phi^2 + sigmaw^2
+
+  for (t in 1:n) {
+    
+    epsilon1[t] <- y[t] - alpha - h[t] - mu1
+    epsilon2[t] <- y[t] - alpha - h[t] - mu2
+    Sigma1[t] <- P[t] + sigma1^2
+    Sigma2[t] <- P[t] + sigma2^2
+    k1[t] <- phi^2 * P[t] / Sigma1[t]
+    k2[t] <- phi^2 * P[t] / Sigma2[t]
+    
+    pi1[t] <- (dnorm(y[t], h[t] + mu1, sqrt(Sigma1[t]))/2) /
+      mean(c(dnorm(y[t], h[t] + mu1, sqrt(Sigma1[t])), 
+             dnorm(y[t], h[t] + mu2, sqrt(Sigma2[t]))))
+    pi2[t] <- 1 - pi1[t]
+    
+    h[t+1] <- phi * h[t] + (pi1[t]*k1[t]*epsilon1[t]) +
+      (pi2[t]*k2[t]*epsilon2[t])
+    P[t+1] <- phi^2 * P[t] + sigmaw^2 - pi1[t]*k1[t]^2*epsilon1[t] -
+      pi2[t]*k2[t]^2*epsilon2[t]
+    
+    loglik_sv <- loglik_sv + log((dnorm(y[t], h[t+1] + mu1, sqrt(Sigma1[t])) +
+                                    dnorm(y[t], h[t+1] + mu1, sqrt(Sigma1[t])))/2) 
+  }
+  
+  return(loglik_sv)
+}
+
+estimacao_sv <- function(params, y, fuller=FALSE, c=0.005) {
+  optim(params, ll_sv, r=y, fuller=fuller, c=c)
+}
+```
+
+Essa é a primeira versão da função. Caso dê certo, vou tentar otimizá-la.
+
+# Estimação do modelo 1 vez
+
+Vou simular o modelo com os seguintes parâmetros:
+
+- $\mu = 0 \implies \beta = 1 \implies \alpha = 0$
+- $\phi = 0.97$
+- $\sigma_w = 1.5$
+
+Além disso, vou considerar para a estimação:
+
+- $\sigma_1 = \sigma_2 = 1.5$
+- $\mu_1 = 0.8, ~~ \mu_2 = 0.9$
+
+como as variâncias e médias das normais que compõe a mistura de $\eta_t$.
+
 
 ```{r}
 amostra <- svsim(1000, mu = 0, phi = .97, sigma = 1.5)
@@ -24,16 +97,6 @@ volatilidade <- amostra$vol
 ```
 
 ```{r}
-c <- .005
-s2 <- var(serie)
-
-y <- log(serie^2 + c*s2) - (c*s2 / (serie^2 + c*s2))
-```
-
-# Estimação
-
-```{r}
-source("Kalman-filter.R")
 params <- c(.3, .9, .01, 1.5, 1.5, .8, .9)
 ll_sv(params, r = serie, fuller = T)
 ```
@@ -42,7 +105,201 @@ ll_sv(params, r = serie, fuller = T)
 
 
 ```{r}
-estimacao_sv(params, serie, fuller = F)
+suppressWarnings(estimacao_sv(params, serie, fuller = F))
 ```
 
 *nota 2*: Aparentemente, é melhor não utilizar a transformação de fuller.
+
+# Estudo de simulação
+
+**Objetivo:** Simular 1000 amostras do modelo com esses parâmetros e avaliar a estimativa de cada modelo simulado. Faço isso para avaliar se a função de estimação está funcionando apropriadamente.
+
+Os parâmetros são:
+
+- $\mu = 0 \implies \alpha = 0$
+- $\phi = 0.97$
+- $\sigma_w = 0.4$
+
+Além disso, vou considerar para a estimação:
+
+- $\sigma_1 = \sigma_2 = 1.3$
+- $\mu_1 = 1, ~~ \mu_2 = 1$
+
+Vou fazer esse estudo considerando uma amostra sem transformação de fuller e outra com a transformação.
+
+
+```{r, eval=FALSE}
+# Simulação para Fuller = FALSE
+n <- 1000
+params <- c(1, .9, .6, 1.3, 1.3, 1, 1)
+alpha <- phi <- sigmaw <- sigma1 <- sigma2 <- mu1 <- mu2 <- rep(0, n)
+
+for (i in 1:n){
+  message(paste0("Iteração: ", i, " / ", n))
+  amostra <- svsim(1000, mu = 0, phi = .97, sigma = .4)$y
+  estimado <- suppressWarnings(estimacao_sv(params, amostra, fuller = F))
+  alpha[i] <- estimado$par[1]
+  phi[i] <- estimado$par[2]
+  sigmaw[i] <- estimado$par[3]
+  sigma1[i] <- estimado$par[4]
+  sigma2[i] <- estimado$par[5]
+  mu1[i] <- estimado$par[6]
+  mu2[i] <- estimado$par[7]
+}
+```
+
+```{r, eval=FALSE}
+# Simulação para Fuller = TRUE
+n <- 1000
+params <- c(1, .9, .6, 1.3, 1.3, 1, 1)
+alpha_fuller <- phi_fuller <- sigmaw_fuller <- sigma1_fuller <- rep(0, n)
+sigma2_fuller <- mu1_fuller <- mu2_fuller <- rep(0, n)
+
+for (i in 1:n){
+  message(paste0("Iteração: ", i, " / ", n))
+  amostra <- svsim(1000, mu = 0, phi = .97, sigma = .4)$y
+  estimado <- suppressWarnings(estimacao_sv(params, amostra, fuller = T))
+  alpha_fuller[i] <- estimado$par[1]
+  phi_fuller[i] <- estimado$par[2]
+  sigmaw_fuller[i] <- estimado$par[3]
+  sigma1_fuller[i] <- estimado$par[4]
+  sigma2_fuller[i] <- estimado$par[5]
+  mu1_fuller[i] <- estimado$par[6]
+  mu2_fuller[i] <- estimado$par[7]
+}
+```
+
+## Análise Gráfica
+
+### Sem usar transformação de Fuller
+
+```{r, echo=FALSE}
+#dados_simulados <- data.frame(alpha, phi, sigmaw, 
+#                              sigma1, sigma2, mu1, mu2)
+#save(dados_simulados, file = "artifacts/dados_simulados.RData")
+load("artifacts/dados_simulados.RData")
+
+alpha.plot <- dados_simulados %>% 
+  ggplot() +
+  geom_density(aes(x = alpha), fill = "red", alpha=.3) + 
+  geom_vline(xintercept = 0, color = "red") +
+  labs(y="", x = expression(alpha)) +
+  theme_bw()
+
+phi.plot <- dados_simulados %>% 
+  ggplot(aes(x = phi)) +
+  geom_density(fill = "blue", alpha=.3) + 
+  geom_vline(xintercept = .97, color = "red") +
+  labs(y = "", x = expression(phi)) + 
+  theme_bw()
+
+sigmaw.plot <- dados_simulados %>% 
+  ggplot(aes(x = sigmaw)) +
+  geom_density(fill = "yellow", alpha=.3) + 
+  geom_vline(xintercept = .4, color = "red") +
+  labs(y = "", x = expression(sigma[w])) +
+  theme_bw()
+
+sigma1.plot <- dados_simulados %>% 
+  ggplot(aes(x = sigma1)) +
+  geom_density(fill = "orange", alpha=.3) +
+  labs(y = "", x = expression(sigma[1])) +
+  theme_bw()
+
+sigma2.plot <- dados_simulados %>% 
+  ggplot(aes(x = sigma2)) +
+  geom_density(fill = "orange3", alpha=.3) +
+  labs(y = "", x = expression(sigma[2])) +
+  theme_bw()
+
+mu1.plot <- dados_simulados %>% 
+  ggplot(aes(x = mu1)) +
+  geom_density(fill = "green", alpha=.3) +
+  labs(y = "", x = expression(mu[1])) +
+  theme_bw()
+
+mu2.plot <- dados_simulados %>% 
+  ggplot(aes(x = mu2)) +
+  geom_density(fill = "green3", alpha=.3) +
+  labs(y = "", x = expression(mu[2])) +
+  theme_bw()
+```
+
+Abaixo é apresentado as densidades dos parâmetros simulados. A barra vermelha indica o valor verdadeiro dos parâmetros do modelo amostrado. Note que as densidades para os valores de $\sigma_1, \sigma_2, \mu1, \mu2$ não possuem a barra indicando o valor verdadeiro, já que esses parâmetros são considerados apenas na estimação, e não na simulação. 
+
+```{r, echo=FALSE}
+alpha.plot + phi.plot + sigmaw.plot
+```
+
+```{r, echo=FALSE}
+(sigma1.plot + sigma2.plot) / (mu1.plot + mu2.plot)
+```
+
+### Com a transformação de Fuller
+
+```{r, echo=FALSE}
+#dados_simulados <- data.frame(alpha_fuller, phi_fuller, sigmaw_fuller, 
+#                              sigma1_fuller, sigma2_fuller, mu1_fuller,
+#                              mu2_fuller)
+#save(dados_simulados, file = "artifacts/dados_simulados_fuller.RData")
+load("artifacts/dados_simulados_fuller.RData")
+
+alpha.plot <- dados_simulados %>% 
+  ggplot() +
+  geom_density(aes(x = alpha_fuller), fill = "red", alpha=.3) + 
+  geom_vline(xintercept = 0, color = "red") +
+  labs(y="", x = expression(alpha[f])) +
+  theme_bw()
+
+phi.plot <- dados_simulados %>% 
+  ggplot(aes(x = phi_fuller)) +
+  geom_density(fill = "blue", alpha=.3) + 
+  geom_vline(xintercept = .97, color = "red") +
+  labs(y = "", x = expression(phi[f])) + 
+  theme_bw()
+
+sigmaw.plot <- dados_simulados %>% 
+  ggplot(aes(x = sigmaw_fuller)) +
+  geom_density(fill = "yellow", alpha=.3) + 
+  geom_vline(xintercept = .4, color = "red") +
+  labs(y = "", x = expression(sigma['w,f'])) +
+  theme_bw()
+
+sigma1.plot <- dados_simulados %>% 
+  ggplot(aes(x = sigma1_fuller)) +
+  geom_density(fill = "orange", alpha=.3) + 
+  labs(y = "", x = expression(sigma['1,f'])) +
+  theme_bw()
+
+sigma2.plot <- dados_simulados %>% 
+  ggplot(aes(x = sigma2_fuller)) +
+  geom_density(fill = "orange3", alpha=.3) + 
+  labs(y = "", x = expression(sigma['2,f'])) +
+  theme_bw()
+
+mu1.plot <- dados_simulados %>% 
+  ggplot(aes(x = mu1_fuller)) +
+  geom_density(fill = "green", alpha=.3) +
+  labs(y = "", x = expression(mu['1,f'])) +
+  theme_bw()
+
+mu2.plot <- dados_simulados %>% 
+  ggplot(aes(x = mu2_fuller)) +
+  geom_density(fill = "green3", alpha=.3) +
+  labs(y = "", x = expression(mu['2,f'])) +
+  theme_bw()
+```
+
+```{r, echo=FALSE}
+alpha.plot + phi.plot + sigmaw.plot
+```
+
+```{r, echo=FALSE}
+(sigma1.plot + sigma2.plot) / (mu1.plot + mu2.plot)
+```
+
+# Conclusão
+
+As simulações deixam claro que o algoritmo não está funcionando adequadamente. Possivelmente há algum erro de implementação do algoritmo. A transformação de Fuller não parece ter surtido efeito.
+
+
