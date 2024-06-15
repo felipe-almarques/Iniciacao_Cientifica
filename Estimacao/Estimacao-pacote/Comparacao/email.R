@@ -1,4 +1,5 @@
 enviar_email <- function(erros, RMSE){
+
   
   ## conectando com o servidor
   path <- "chave_acesso_email_r.json"
@@ -12,7 +13,7 @@ enviar_email <- function(erros, RMSE){
     gm_to(c("felipealbuquerquemarques@gmail.com", 
             "f236106@dac.unicamp.br")) %>% 
     gm_from("f236106@dac.unicamp.br") %>% 
-    gm_subject("[V1] Email IC") %>% 
+    gm_subject("[IC] Resultado Simulação") %>% 
     gm_text_body(texto)
   
   ## anexando os arquivos
@@ -29,6 +30,7 @@ enviar_email <- function(erros, RMSE){
   #gm_create_draft(email)
   
   ## enviando o email
+  gm_auth(email = "f236106@dac.unicamp.br")
   
   gm_send_message(email)
   

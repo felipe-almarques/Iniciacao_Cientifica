@@ -1,6 +1,5 @@
-###############################################################################
-##############                Compara??o de Modelos              ##############
-###############################################################################
+###########################################################################################              Comparação de Modelos              ################
+##############################################################################
 
 ## Pacotes
 library(tidyverse)
@@ -10,6 +9,7 @@ library(stochvol)
 library(GAS)
 library(gmailr)
 library(glue)
+library(progress)
 
 source("Comparacao/estimacao.R")
 source("Comparacao/metricas.R")
@@ -19,22 +19,23 @@ message <- base::message
 #### Simulação ####
 ## Setando os tamanhos
 n <- c(500, 1000, 2500)
-M <- 5
+M <- 1000
 
 ## Definindo variáveis e parâmetros
 erros <- list()
-garch_param <- list(alpha = c(.1, .2), beta = .2)
-sv_param <- list(mu = 0, phi = .97, sigma = .4)
-gas_param <- list(kappa = c(0, .1), A = matrix(c(0, 0, 0, .3), ncol = 2), 
-B = matrix(c(0, 0, 0, .2), ncol = 2), dist = "norm", scaling = "Identity")
-
+garch_param <- list(alpha = c(0.00002 , 0.11), beta = 0.87)
+sv_param <- list(mu = -7.61, phi = 0.96, sigma = 0.21)
+gas_param <- list(kappa = c(0, -0.26), 
+                  A = matrix(c(0, 0, 0, 0.19), ncol = 2), 
+                  B = matrix(c(0, 0, 0, 0.96), ncol = 2), 
+                  dist = "norm", scaling = "Identity")
 
 ## Iniciando o loop
 for (i in 1:length(n)) {
   message(paste0("Iteração ", i, ": n = ", n[i]))
   erros[[i]] <- estimacao(n[i], M, garch_param, sv_param, gas_param)
 }
-
+message("Finalizado!")
 #### Calculando as métricas ####
 rmse <- metricas(erros)
 
@@ -42,6 +43,7 @@ rmse <- metricas(erros)
 
 enviar_email(erros, rmse)
 
-
+# ugarchfilter-->error: parameters names do not match specification
+# Expected Parameters are: omega alpha1 beta1
 
 

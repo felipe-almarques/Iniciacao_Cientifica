@@ -3,7 +3,14 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
   # sv_param: list(mu, phi, sigma)
   # gas_param: list(kappa, A, B, dist, scaling)
   
-  
+  ## Definindo a progress bar
+  pb <- progress_bar$new(format = "(:spin) [:bar] :percent [Elapsed time: :elapsedfull || Estimated time remaining: :eta]",
+                         total = M,
+                         complete = "=",   # Completion bar character
+                         incomplete = "-", # Incomplete bar character
+                         current = ">",    # Current bar character
+                         clear = FALSE,    # If TRUE, clears the bar when finish
+                         width = 100)      # Width of the progress bar
   
   ## Definindo os vetores de previsões
   volgarch_verdadeira <- rep(0, M) ; volgarch_garch <- rep(0, M)
@@ -29,27 +36,72 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
                          GASPar = list(scale = TRUE))
   
   for (t in 1:M) {
-    message(paste0(t, " / ", M))
-    ## Simula??o
+    #message(paste0(t, " / ", M))
+    
+    ## Simulacao
     amostra_garch <- garch.sim(alpha, beta, n + 1)
     amostra_sv <- svsim(n + 1, mu, phi, sigma)
-    amostra_gas <- UniGASSim(T.sim = n + 1, kappa = kappa, A = A, B = B, Dist = dist, ScalingType = Scaling)
+    amostra_gas <- UniGASSim(T.sim = n + 1, kappa = kappa, A = A, B = B, 
+                             Dist = dist, ScalingType = Scaling)
     
-    ## Estima??o
+    ## Estimacao
     # Garch
-    fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
+    tryCatch(
+      expr = {
+        fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
+      },
+      error = function(cond) {
+        message("Erro ao ajustar o modelo")
+        message("Causa do erro:")
+        message(conditionMessage(cond))
+        message("Simulando outra amostra, e ajustando-a")
+        
+        amostra_garch <- garch.sim(alpha, beta, n + 1)
+        fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
+      }
+    )
+    #fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
     fit_sv1 <- svsample(amostra_garch[1:n], quiet = TRUE)
     fit_gas1 <- UniGASFit(spec_gas, amostra_garch[1:n])
     # SV
-    fit_garch2 <- ugarchfit(spec_garch, amostra_sv$y[1:n])
+    tryCatch(
+      expr = {
+        fit_garch2 <- ugarchfit(spec_garch, amostra_sv$y[1:n])
+      },
+      error = function(cond) {
+        message("Erro ao ajustar o modelo")
+        message("Causa do erro:")
+        message(conditionMessage(cond))
+        message("Simulando outra amostra, e ajustando-a")
+        
+        amostra_sv <- svsim(n + 1, mu, phi, sigma)
+        fit_garch2 <- ugarchfit(spec_garch, amostra_sv$y[1:n])
+      }
+    )
+    #fit_garch2 <- ugarchfit(spec_garch, amostra_sv$y[1:n])
     fit_sv2 <- svsample(amostra_sv$y[1:n], quiet = TRUE)
     fit_gas2 <- UniGASFit(spec_gas, amostra_sv$y[1:n])
     # Gas
-    fit_garch3 <- ugarchfit(spec_garch, amostra_gas@Data$vY[1:n])
+    tryCatch(
+      expr = {
+        fit_garch3 <- ugarchfit(spec_garch, amostra_gas@Data$vY[1:n])
+      },
+      error = function(cond) {
+        message("Erro ao ajustar o modelo")
+        message("Causa do erro:")
+        message(conditionMessage(cond))
+        message("Simulando outra amostra, e ajustando-a")
+        
+        amostra_gas <- UniGASSim(T.sim = n + 1, kappa = kappa, A = A, 
+                                 B = B, Dist = dist, ScalingType = Scaling)
+        fit_garch3 <- ugarchfit(spec_garch, amostra_gas@Data$vY[1:n])
+      }
+    )
+    #fit_garch3 <- ugarchfit(spec_garch, amostra_gas@Data$vY[1:n])
     fit_sv3 <- svsample(amostra_gas@Data$vY[1:n], quiet = TRUE)
     fit_gas3 <- UniGASFit(spec_gas, amostra_gas@Data$vY[1:n])
     
-    ## Previs?o One-step-ahead
+    ## Previsao One-step-ahead
     # Garch
     fore_garch1 <- ugarchforecast(fit_garch1, n.ahead = 1)
     fore_sv1 <- predict(fit_sv1, 1)
@@ -79,12 +131,13 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
     volgas_garch[t] <- fore_garch3@forecast$sigmaFor
     volgas_sv[t] <- summary(fore_sv3$vol)$statistics[1]
     volgas_gas[t] <- fore_gas3@Forecast$PointForecast[2]
+    
+    pb$tick()
   }
   
   dados <- data.frame(volgarch_verdadeira, volgarch_garch, volgarch_sv,
                       volgarch_gas, volsv_verdadeira, volsv_garch, 
                       volsv_sv, volsv_gas, volgas_verdadeira, volgas_garch,
                       volgas_sv, volgas_gas)
-  message("Finalizado!")
   return(dados)
 }
