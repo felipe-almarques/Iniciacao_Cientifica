@@ -19,7 +19,7 @@ message <- base::message
 #### Simulação ####
 ## Setando os tamanhos
 n <- c(500, 1000, 2500)
-M <- 1000
+M <- 10
 
 ## Definindo variáveis e parâmetros
 erros <- list()
