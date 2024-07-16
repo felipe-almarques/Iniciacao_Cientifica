@@ -6,11 +6,11 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
   ## Definindo a progress bar
   pb <- progress_bar$new(format = "(:spin) [:bar] :percent [Elapsed time: :elapsedfull || Estimated time remaining: :eta]",
                          total = M,
-                         complete = "=",   # Completion bar character
-                         incomplete = "-", # Incomplete bar character
-                         current = ">",    # Current bar character
-                         clear = FALSE,    # If TRUE, clears the bar when finish
-                         width = 100)      # Width of the progress bar
+                         complete = "=",   
+                         incomplete = "-", 
+                         current = ">",    
+                         clear = FALSE,
+                         width = 100)      
   
   ## Definindo os vetores de previsões
   volgarch_verdadeira <- rep(0, M) ; volgarch_garch <- rep(0, M)
@@ -22,10 +22,7 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
   
   ## Definindo parametros
   alpha <- garch_param$alpha ; beta <- garch_param$beta
-  #mu <- -10 ; phi <- .99 ; sigma <- .2
   mu <- sv_param$mu ; phi <- sv_param$phi ; sigma <- sv_param$sigma
-  #kappa <- c(0, .1) ; A <- matrix(c(0, 0, 0, .3), ncol = 2) 
-  #B <- matrix(c(0, 0, 0, .2), ncol = 2) ; dist <- "norm" ; Scaling <- "Identity"
   kappa <- gas_param$kappa ; A <- gas_param$A
   B <- gas_param$B ; dist <- gas_param$dist ; Scaling <- gas_param$scaling
   
@@ -39,7 +36,6 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
     if((t/M) %in% seq(0,1,.25)){
       email_aviso(i=t)
     } 
-    #message(paste0(t, " / ", M))
     flag <- TRUE
     while (flag) {
       tryCatch(
@@ -53,30 +49,20 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
           
           ## Estimacao
           # Garch
-          #fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
-          #amostra_garch <- garch.sim(alpha, beta, n + 1)
           fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
-          #fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
           fit_sv1 <- svsample(amostra_garch[1:n], quiet = TRUE)
           fit_gas1 <- UniGASFit(spec_gas, amostra_garch[1:n])
           # SV
           fit_garch2 <- ugarchfit(spec_garch, amostra_sv$y[1:n])
-          amostra_sv <- svsim(n + 1, mu, phi, sigma)
-          fit_garch2 <- ugarchfit(spec_garch, amostra_sv$y[1:n])
-          #fit_garch2 <- ugarchfit(spec_garch, amostra_sv$y[1:n])
           fit_sv2 <- svsample(amostra_sv$y[1:n], quiet = TRUE)
           fit_gas2 <- UniGASFit(spec_gas, amostra_sv$y[1:n])
           # Gas
           fit_garch3 <- ugarchfit(spec_garch, amostra_gas@Data$vY[1:n])
-          amostra_gas <- UniGASSim(T.sim = n + 1, kappa = kappa, A = A, 
-                                   B = B, Dist = dist, ScalingType = Scaling)
-          fit_garch3 <- ugarchfit(spec_garch, amostra_gas@Data$vY[1:n])
-          #fit_garch3 <- ugarchfit(spec_garch, amostra_gas@Data$vY[1:n])
           fit_sv3 <- svsample(amostra_gas@Data$vY[1:n], quiet = TRUE)
           fit_gas3 <- UniGASFit(spec_gas, amostra_gas@Data$vY[1:n])
           
           ## Previsao One-step-ahead
-          # Garch
+          # Amostra Garch
           fore_garch1 <- ugarchforecast(fit_garch1, n.ahead = 1)
           fore_sv1 <- predict(fit_sv1, 1)
           fore_gas1 <- UniGASFor(fit_gas1, H = 1)
@@ -86,7 +72,7 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
           volgarch_sv[t] <- summary(fore_sv1$vol)$statistics[1]
           volgarch_gas[t] <- fore_gas1@Forecast$PointForecast[2]
           
-          # SV
+          # Amostra SV
           fore_garch2 <- ugarchforecast(fit_garch2, n.ahead = 1)
           fore_sv2 <- predict(fit_sv2, 1)
           fore_gas2 <- UniGASFor(fit_gas2, H = 1)
@@ -96,7 +82,7 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
           volsv_sv[t] <- summary(fore_sv2$vol)$statistics[1]
           volsv_gas[t] <- fore_gas2@Forecast$PointForecast[2]
           
-          # GAS
+          # Amostra GAS
           fore_garch3 <- ugarchforecast(fit_garch3, n.ahead = 1)
           fore_sv3 <- predict(fit_sv3, 1)
           fore_gas3 <- UniGASFor(fit_gas3, H = 1)
@@ -114,8 +100,6 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
           message("Mensagem de erro:")
           message(conditionMessage(cond))
           message("Simulando novamente os dados")
-          
-          ### Colar o código antigo aqui (se não funcionar) ###
         }
       )
     }
