@@ -19,7 +19,7 @@ message <- base::message
 #### Simulação ####
 ## Setando os tamanhos
 n <- c(500, 1000, 2500)
-M <- 10
+M <- 100
 
 ## Definindo variáveis e parâmetros
 erros <- list()
@@ -34,6 +34,7 @@ gas_param <- list(kappa = c(0, -0.26),
 for (i in 1:length(n)) {
   message(paste0("Iteração ", i, ": n = ", n[i]))
   erros[[i]] <- estimacao(n[i], M, garch_param, sv_param, gas_param)
+  email_aviso(metricas=TRUE, j=i, erros=erros[[i]])
 }
 message("Finalizado!")
 #### Calculando as métricas ####

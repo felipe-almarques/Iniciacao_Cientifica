@@ -36,6 +36,9 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
                          GASPar = list(scale = TRUE))
   
   for (t in 1:M) {
+    if((t/M) %in% seq(0,1,.25)){
+      email_aviso(i=t)
+    } 
     #message(paste0(t, " / ", M))
     flag <- TRUE
     while (flag) {
@@ -50,8 +53,8 @@ estimacao <- function(n, M, garch_param, sv_param, gas_param) {
           
           ## Estimacao
           # Garch
-          fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
-          amostra_garch <- garch.sim(alpha, beta, n + 1)
+          #fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
+          #amostra_garch <- garch.sim(alpha, beta, n + 1)
           fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
           #fit_garch1 <- ugarchfit(spec_garch, amostra_garch[1:n])
           fit_sv1 <- svsample(amostra_garch[1:n], quiet = TRUE)

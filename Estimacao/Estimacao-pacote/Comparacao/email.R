@@ -35,3 +35,51 @@ enviar_email <- function(erros, RMSE){
   gm_send_message(email)
   
 }
+
+
+email_aviso <- function(i=1, metricas=FALSE, j=1, erros) {
+  
+  ## conectando com o servidor
+  path <- "chave_acesso_email_r.json"
+  gm_auth_configure(client = gargle::gargle_oauth_client_from_json(path))
+  
+  
+  ## Construindo o email interno (progresso para o mesmo tamanho amostral)
+  if (metricas == FALSE) {
+    texto <- glue("A simulacao continua rodando a todo vapor! Ja estamos na iteracao {i}.\n Em breve retornaremos com mais atualizacoes.")
+    
+    
+    email <- gm_mime() %>%
+      gm_to(c("felipealbuquerquemarques@gmail.com", 
+              "f236106@dac.unicamp.br")) %>% 
+      gm_from("f236106@dac.unicamp.br") %>% 
+      gm_subject("[IC] Progresso da Simulacao") %>% 
+      gm_text_body(texto)
+  }
+  
+  ## construindo o email externo (diferentes tamanhos amostrais)
+  if (metricas) {
+    texto <- glue("A simulacao concluiu mais um passo! Ja finalizamos a amostra {j}.\nOs resultados simulados se encontram em anexo.\n\nAtenciosamente,\nFelipe")
+    
+    
+    email <- gm_mime() %>%
+      gm_to(c("felipealbuquerquemarques@gmail.com", 
+              "f236106@dac.unicamp.br")) %>% 
+      gm_from("f236106@dac.unicamp.br") %>% 
+      gm_subject("[IC] Progresso da Simulacao") %>% 
+      gm_text_body(texto)
+    
+    ## anexando os arquivos
+    write.csv(erros, file="artifacts/erros_temporario.csv")
+    save(erros, file="artifacts/erros_temporario.RData")
+    
+    email <- gm_attach_file(email, "artifacts/erros_temporario.RData")
+    email <- gm_attach_file(email, "artifacts/erros_temporario.csv")
+  }
+  
+  ## enviando o email
+  gm_auth(email = "f236106@dac.unicamp.br")
+  
+  gm_send_message(email)
+}
+
