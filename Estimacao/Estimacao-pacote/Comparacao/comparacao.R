@@ -37,14 +37,9 @@ for (i in 1:length(n)) {
   email_aviso(metricas=TRUE, j=i, erros=erros[[i]])
 }
 message("Finalizado!")
+
 #### Calculando as métricas ####
 rmse <- metricas(erros)
 
 #### Enviando o email ####
-
 enviar_email(erros, rmse)
-
-# ugarchfilter-->error: parameters names do not match specification
-# Expected Parameters are: omega alpha1 beta1
-
-
