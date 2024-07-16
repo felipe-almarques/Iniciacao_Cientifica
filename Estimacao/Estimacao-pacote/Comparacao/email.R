@@ -10,10 +10,9 @@ enviar_email <- function(erros, RMSE){
   
   
   email <- gm_mime() %>%
-    gm_to(c("felipealbuquerquemarques@gmail.com", 
-            "f236106@dac.unicamp.br")) %>% 
+    gm_to("felipealbuquerquemarques@gmail.com") %>% 
     gm_from("f236106@dac.unicamp.br") %>% 
-    gm_subject("[IC] Resultado Simulação") %>% 
+    gm_subject("[IC] Resultado Simulacao") %>% 
     gm_text_body(texto)
   
   ## anexando os arquivos
