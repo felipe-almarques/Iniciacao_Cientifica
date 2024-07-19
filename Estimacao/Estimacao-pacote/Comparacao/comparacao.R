@@ -31,6 +31,7 @@ gas_param <- list(kappa = c(0, -0.26),
                   dist = "norm", scaling = "Identity")
 
 ## Iniciando o loop
+email_aviso(init = TRUE)
 for (i in 1:length(n)) {
   message(paste0("Iteração ", i, ": n = ", n[i]))
   erros[[i]] <- estimacao(n[i], M, garch_param, sv_param, gas_param)

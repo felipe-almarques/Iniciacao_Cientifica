@@ -36,7 +36,7 @@ enviar_email <- function(erros, RMSE){
 }
 
 
-email_aviso <- function(i=1, metricas=FALSE, j=1, erros) {
+email_aviso <- function(i=1, metricas=FALSE, j=1, erros, init=FALSE) {
   
   ## conectando com o servidor
   path <- "chave_acesso_email_r.json"
@@ -76,9 +76,20 @@ email_aviso <- function(i=1, metricas=FALSE, j=1, erros) {
     email <- gm_attach_file(email, "artifacts/erros_temporario.csv")
   }
   
+  if (init) {
+    texto <- glue("A simulacao acabou de comecar!\n Em breve retornaremos com mais atualizacoes.")
+    
+    
+    email <- gm_mime() %>%
+      gm_to(c("felipealbuquerquemarques@gmail.com", 
+              "f236106@dac.unicamp.br")) %>% 
+      gm_from("f236106@dac.unicamp.br") %>% 
+      gm_subject("[IC] Progresso da Simulacao") %>% 
+      gm_text_body(texto)
+  }
+  
   ## enviando o email
   gm_auth(email = "f236106@dac.unicamp.br")
   
   gm_send_message(email)
 }
-
