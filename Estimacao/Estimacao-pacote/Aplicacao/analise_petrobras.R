@@ -40,7 +40,7 @@ modelo_garch <- ugarchfit(spec, dados$ret)
 
 modelo_garch
 diagnostico(modelo_garch)
-round(modelo_garch@fit$coef, 2)
+round(modelo_garch@fit$coef, 5)
 
 # omega alpha1  beta1 
 # 0.00   0.11   0.87 

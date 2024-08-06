@@ -1,8 +1,11 @@
 ###########################################################################################              Comparação de Modelos              ################
 ##############################################################################
+## Instalando os pactoes
+#nstall.packages(c("dplyr", "TSA", "rugarch", "stochvol",
+#                   "GAS", "gmailr", "glue", "progress"))
 
 ## Pacotes
-library(tidyverse)
+library(dplyr)
 library(TSA)
 library(rugarch)
 library(stochvol)
@@ -19,7 +22,7 @@ message <- base::message
 #### Simulação ####
 ## Setando os tamanhos
 n <- c(500, 1000, 2500)
-M <- 10
+M <- 10000
 
 ## Definindo variáveis e parâmetros
 erros <- list()
